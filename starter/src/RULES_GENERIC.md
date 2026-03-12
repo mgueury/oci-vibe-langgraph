@@ -1,48 +1,38 @@
 # Generic Implementation Rules (Syntax & Conventions)
 
-These rules describe implementation conventions inferred from the current `src/` codebase, without tying them to specific demo business content.
+These rules describe implementation conventions inferred from the current `src/` codebase, without hard-coding business logic.
 
-## 1) Placeholder and variable conventions
+## 1) Shell scripting conventions
 
-- Use `##VARIABLE_NAME##` placeholders in templates/scripts for values injected during build/deploy.
-- For optional placeholders, use `##OPTIONAL/VARIABLE_NAME##`.
-- Runtime/deploy variables are exported with `TF_VAR_*` naming where applicable.
+- Use Bash for automation (`#!/usr/bin/env bash` or `#!/bin/bash`).
+- Resolve script location with `BASH_SOURCE[0]` and `cd` to script directory before relative operations.
+- Source environment bridges (`env.sh`, `compute/tf_env.sh`) before running dependent commands.
+- Keep scripts rerunnable and explicit (`install.sh`, `start.sh`, `build_*.sh`, `db_init.sh`).
 
-## 2) Shell scripting conventions
+## 2) Python service conventions
 
-- Use Bash (`#!/usr/bin/env bash`) for automation scripts.
-- Resolve script directory via `BASH_SOURCE[0]` before relative path operations.
-- Fail fast on unmet preconditions (missing env var/input).
-- Keep scripts idempotent where possible (safe to rerun on same host).
-- Use system packages/services standard to Oracle Linux environment (`dnf`, `systemd`, `firewalld`).
+- Python components are dependency-driven by local `requirements.txt` files.
+- LangGraph agent code lives under `src/app/src_langgraph/agent/`.
+- MCP tools live in `src/app/src_mcp_server/mcp_server.py` and are registered with `@mcp.tool()`.
+- Configuration is read from environment variables (for example `MCP_SERVER_URL`, DB credentials, OCI settings).
 
-## 3) Java/Spring conventions
+## 3) UI conventions
 
-- Use Spring Boot application structure with:
-  - `@SpringBootApplication` entrypoint
-  - `@RestController` for HTTP endpoints
-  - JPA entities with `@Entity` and `@Table`
-  - repository interfaces extending `JpaRepository`
-- Keep entity fields mapped directly to table columns with explicit getters/setters.
+- UI is static web content in `src/ui/ui/` (HTML/CSS/JS + assets).
+- Front-end JavaScript uses `fetch` and relative URLs for backend integration.
+- Keep chat behavior in `chat.js` and markup in `chat.html`.
 
-## 4) UI conventions
+## 4) Container/Kubernetes conventions
 
-- UI is static HTML/CSS/JS and should consume backend APIs through relative URLs.
-- JavaScript should:
-  - call REST endpoints asynchronously,
-  - parse JSON payloads,
-  - render structured output in dedicated DOM containers.
-- Containerized UI should be served from NGINX document root.
+- Dockerfiles are separated by component (`Dockerfile_langgraph`, `Dockerfile_mcp_server`, UI `Dockerfile`).
+- Kubernetes manifests are split by service (`k8s_langgraph.yaml`, `k8s_mcp_server.yaml`, `ui.yaml`).
 
-## 5) Terraform conventions
+## 5) Reverse proxy conventions
 
-- Separate concerns across files (provider, variables, network, compute, database, outputs, orchestration).
-- Use locals for derived values and naming composition.
-- Use outputs for values consumed by shell tooling.
-- Generate environment bridge files (e.g., `target/tf_env.sh`) for post-terraform scripting.
+- NGINX path routing for compute deployment is defined in `src/compute/nginx_app.locations`.
+- Keep path contracts stable (for example `/langgraph/server/` forwarding to local service port).
 
-## 6) Deployment artifact conventions
+## 6) Terraform conventions
 
-- Keep generated/runtime artifacts under `target/`.
-- Keep reusable source assets under `src/` and treat them as templates when placeholders exist.
-- Build and deploy steps should support both compute-style and container-style targets.
+- Terraform files are modularized by concern (`provider.tf`, `network.tf`, `compute.tf`, `atp.tf`, `output.tf`, etc.).
+- Use Terraform outputs/environment export flow to feed runtime shell and app setup.

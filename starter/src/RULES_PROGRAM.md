@@ -1,47 +1,37 @@
-# Program-Specific Rules (OCI Starter Demo)
+# Program-Specific Rules (OCI Vibe + LangGraph + MCP)
 
-These rules define behavior specific to this program/demo (tables, endpoints, UI wiring, and infra defaults).
+These rules define behavior specific to this repository implementation under `starter/src`.
 
-## 1) Demo data model rules
+## 1) Database rules
 
-- The demo schema contains at least these tables:
-  - `DEPT(DEPTNO PK, DNAME, LOC)`
-  - `EMP(EMPNO PK, ENAME, JOB, DEPTNO FK -> DEPT.DEPTNO)`
-- Database bootstrap script `src/db/oracle.sql` is the source of truth for initial schema + seed data.
+- Oracle schema initialization is defined in `src/db/oracle.sql` and executed by `src/db/db_init.sh`.
+- `oracle.sql` currently defines and seeds:
+  - `DEPT(DEPTNO, DNAME, LOC)`
+  - `EMP(EMPNO, ENAME, JOB, DEPTNO)` with FK to `DEPT`.
+- Any change to table structure or seed data must be made in `oracle.sql` to remain deployable.
 
-## 2) REST API rules for the demo
+## 2) MCP server rules
 
-- Backend endpoints exposed by `DemoController`:
-  - `GET /dept` → JSON list of departments
-  - `GET /emp` → JSON list of employees
-  - `GET /info` → plain text service/host info
-- API routes are consumed in UI via `/app/*` path behind NGINX proxy.
+- MCP server entrypoint is `src/app/src_mcp_server/mcp_server.py`.
+- Server transport is HTTP on port `2025`.
+- MCP tools are Python functions decorated with `@mcp.tool()`.
+- The server includes a department data tool `get_dept_data` that reads from Oracle `DEPT` using `DB_USER`, `DB_PASSWORD`, and `DB_URL`.
 
-## 3) UI behavior rules for the demo
+## 3) LangGraph agent rules
 
-- Main page (`src/ui/ui/index.html`) must display:
-  - DEPT JSON + DEPT table
-  - EMP JSON + EMP table
-  - INFO text
-- Frontend script (`src/ui/ui/script.js`) must call:
-  - `app/dept`
-  - `app/emp`
-  - `app/info`
-- NGINX compute routing (`src/compute/nginx_app.locations`) must keep `/app/` proxied to backend port `8080`.
+- Agent runtime is in `src/app/src_langgraph/agent/agent.py`.
+- It connects to the MCP server via `MCP_SERVER_URL` using `MultiServerMCPClient`.
+- Tool calls are mediated by interceptor `inject_user_context` to pass authorization context.
+- Model provider uses OCI Generative AI configuration via environment variables.
 
-## 4) Build/deploy defaults for this demo
+## 4) UI/chat rules
 
-- Default generated environment in Terraform orchestration targets:
-  - `TF_VAR_deploy_type="public_compute"`
-  - `TF_VAR_db_type="autonomous"`
-  - Java + SpringBoot + HTML UI settings as emitted in `target/tf_env.sh`.
-- Build completion file (`target/done.txt`) should include API links, including demo REST routes.
+- Chat UI entry files are `src/ui/ui/chat.html` and `src/ui/ui/chat.js`.
+- The frontend sends streaming run requests to `/langgraph/server/threads/{thread_id}/runs/stream`.
+- On OpenID paths, user info and CSRF token are obtained from `/openid/userinfo`.
 
-## 5) Infra composition rules for this demo
+## 5) Routing and deployment rules
 
-- Terraform composes:
-  - VCN/networking (web/app/db subnets)
-  - one compute instance
-  - one ATP database
-  - build/deploy orchestration via `null_resource` steps
-- DB init (`src/db/db_init.sh`) applies `oracle.sql`, so schema changes must be reflected there to be deployable.
+- Compute NGINX routing is declared in `src/compute/nginx_app.locations`.
+- `/langgraph/server/` is proxied to local port `2024`.
+- Kubernetes manifests are maintained per service in `src/app/k8s_langgraph.yaml`, `src/app/k8s_mcp_server.yaml`, and `src/ui/ui.yaml`.
