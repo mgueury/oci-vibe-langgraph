@@ -1,4 +1,3 @@
-   
 resource "oci_core_instance" "starter_compute" {
 
   availability_domain = local.availability_domain_name
@@ -13,8 +12,8 @@ resource "oci_core_instance" "starter_compute" {
   }
 
   create_vnic_details {
-    subnet_id                 = data.oci_core_subnet.starter_web_subnet.id
-    assign_public_ip          = true
+    subnet_id                 = data.oci_core_subnet.starter_app_subnet.id
+    assign_public_ip          = false
     display_name              = "Primaryvnic"
     assign_private_dns_record = true
     hostname_label            = "${var.prefix}-compute"
@@ -37,7 +36,7 @@ resource "oci_core_instance" "starter_compute" {
 
   source_details {
     source_type = "image"
-    # boot_volume_size_in_gbs = "50" 
+    boot_volume_size_in_gbs = "100" 
     source_id   = data.oci_core_images.oraclelinux.images.0.id
   }
 

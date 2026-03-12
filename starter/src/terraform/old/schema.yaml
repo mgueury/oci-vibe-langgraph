@@ -1,4 +1,4 @@
-title: "OCI Starter: From Resource Manager starter "
+title: "OCI Starter: From Resource Manager __TO_FILL__ "
 stackDescription: "Resource Manager stack created by OCI Starter " 
 description: "Stack will deploy the component used in the OCI Starter project" 
 schemaVersion: 1.1.0
@@ -22,13 +22,9 @@ variableGroups:
 - title: Fixed
   visible: ${show_optional}
   variables:
-  - app_mode
   - db_type
   - db_user
   - deploy_type
-  - java_framework
-  - java_version
-  - java_vm
   - language
   - ui_type
 
@@ -37,7 +33,10 @@ variableGroups:
   variables:
   - auth_token
   - availability_domain_number
+  - build_src
   - certificate_ocid
+  - fn_image
+  - git_url
   - group_name
   - home_region
   - idcs_domain_name
@@ -53,6 +52,8 @@ variableGroups:
   - lz_security_cmp_ocid
   - lz_serv_cmp_ocid
   - lz_web_cmp_ocid
+  - namespace
+  - openapi_spec
   - region
   - ssh_private_key
   - ssh_public_key
@@ -77,6 +78,10 @@ variables:
     type: string
     title: availability_domain_number
     required: false
+  build_src:    
+    type: string
+    title: build_src
+    required: false
   certificate_ocid:    
     type: string
     title: certificate_ocid
@@ -96,6 +101,14 @@ variables:
   db_user:    
     type: string
     title: Database User
+    required: false
+  fn_image:    
+    type: string
+    title: fn_image
+    required: false
+  git_url:    
+    type: string
+    title: git_url
     required: false
   group_name:    
     type: string
@@ -118,8 +131,8 @@ variables:
     enum:
       - terraform_local
       - from_resource_manager
-      - resource_manager
       - terraform_object_storage
+      - resource_manager
     title: infra_as_code
     required: false
   instance_ocpus:    
@@ -169,6 +182,14 @@ variables:
   lz_web_cmp_ocid:
     type: oci:identity:compartment:id
     title: lz_web_cmp_ocid
+    required: false
+  namespace:    
+    type: string
+    title: namespace
+    required: false
+  openapi_spec:    
+    type: string
+    title: openapi_spec
     required: false
   prefix:    
     type: string

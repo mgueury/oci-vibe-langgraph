@@ -56,7 +56,6 @@ locals {
   regex_linux = (var.instance_shape=="VM.Standard.A1.Flex")?local.regex_ampere_linux:local.regex_amd_linux
   #     Oracle-Linux-Cloud-Developer-8.5-2022.05.22-0
   #     Oracle-Linux-Cloud-Developer-8.5-aarch64-2022.05.22-0
-  #     Oracle-Autonomous-Linux-8.10-2025.06.30-0
   regex_amd_dev_linux = "^([a-zA-z]+)-([a-zA-z]+)-([a-zA-z]+)-([a-zA-z]+)-([\\.0-9]+)-([\\.0-9-]+)$"
   regex_ampere_dev_linux= "^([a-zA-z]+)-([a-zA-z]+)-([a-zA-z]+)-([a-zA-z]+)-([\\.0-9]+)-aarch64-([\\.0-9-]+)$"
   regex_dev_linux = (var.instance_shape=="VM.Standard.A1.Flex")?local.regex_ampere_dev_linux:local.regex_amd_dev_linux
@@ -132,7 +131,7 @@ locals {
 
   # OCIR
   local_ocir_host = join("", [lower(lookup(data.oci_identity_regions.current_region.regions[0], "key")), ".ocir.io"])
-  local_ocir_namespace = lookup(data.oci_objectstorage_namespace.ns, "namespace") 
+  local_object_storage_namespace = lookup(data.oci_objectstorage_namespace.ns, "namespace") 
 }
 
 # Random ID
@@ -140,11 +139,6 @@ resource "random_string" "id" {
   length  = 4
   special = false
   upper = false
-}
-
-output "instance_shape" {
-  value = local.shape  
-
 }
 
 ### Username (not needed anymore)
@@ -156,5 +150,5 @@ output "instance_shape" {
 # }
 # locals {
 #   username = var.username != null ? var.username : oci_identity_user.user[0].name
-#   ocir_username = join( "/", [ coalesce(local.ocir_namespace, "missing_privilege"), local.username ])
+#   ocir_username = join( "/", [ coalesce(local.object_storage_namespace, "missing_privilege"), local.username ])
 # }

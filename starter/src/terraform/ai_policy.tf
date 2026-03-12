@@ -1,6 +1,6 @@
 variable no_policy { default=null }
 
-resource "oci_identity_policy" "starter_search_policy" {
+resource "oci_identity_policy" "starter_ai_policy" {
     count          = var.no_policy=="true" ? 0 : 1      
     provider       = oci.home    
     name           = "${var.prefix}-policy"

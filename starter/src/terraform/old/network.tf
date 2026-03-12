@@ -150,6 +150,18 @@ resource "oci_core_security_list" "starter_security_list" {
     }
   }  
 
+  // ORCL_DB_SEE
+  ingress_security_rules {
+    protocol  = "6" // tcp
+    source    = local.cidr_vcn
+    stateless = false
+
+    tcp_options {
+      min = 8081
+      max = 8081
+    }
+  }  
+
   // Oracle TNS Listener port
   ingress_security_rules {
     protocol  = "6" // tcp
@@ -254,6 +266,18 @@ resource "oci_core_security_list" "starter_security_list" {
     tcp_options {
       min = 8443
       max = 8443
+    }
+  }  
+
+  // LangGraph
+  ingress_security_rules {
+    protocol  = "6" // tcp
+    source    = "0.0.0.0/0"
+    stateless = false
+
+    tcp_options {
+      min = 2024
+      max = 2024
     }
   }  
 

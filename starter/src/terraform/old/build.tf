@@ -2,6 +2,8 @@
 
 locals {
   project_dir = (var.infra_as_code=="from_resource_manager")?".":"../.."
+  # When advance!=true, there is no OKE
+  local_oke_ocid = ""
 }
 
 # SSH Keys + tf_env.sh
@@ -31,28 +33,30 @@ resource "null_resource" "tf_env" {
     echo_export "TF_VAR_db_password" "${coalesce(var.db_password,"-")}"
     echo_export "TF_VAR_license_model" "${coalesce(var.license_model,"-")}"
     echo_export "TF_VAR_compartment_ocid" "${coalesce(var.compartment_ocid,"-")}"  
+    echo_export "TF_VAR_region" "${coalesce(var.region,"-")}"  
     echo "# Terraform Locals" >> $ENV_FILE
     echo_export "BASTION_IP" "${local.local_bastion_ip}"
-    echo_export "COMPUTE_IP" "${local.local_compute_ip}"
+    echo_export "BUCKET_URL" "${local.local_bucket_url}"
+    echo_export "COMPUTE_IP" "${local.local_compute_ip}"    
     echo_export "DB_URL" "${local.local_db_url}"
     echo_export "IDCS_URL" "${local.local_idcs_url}"
     echo_export "JDBC_URL" "${local.local_jdbc_url}"
     echo_export "OCIR_HOST" "${local.local_ocir_host}"
-    echo_export "OCIR_NAMESPACE" "${local.local_ocir_namespace}"
+    echo_export "OBJECT_STORAGE_NAMESPACE" "${local.local_object_storage_namespace}"
+    echo_export "OKE_OCID" "${local.local_oke_ocid}"
     echo_export "ORDS_URL" "${local.local_ords_url}" 
     echo "# Fixed" >> $ENV_FILE
-    echo_export "TF_VAR_app_mode" "terraform"
     echo_export "TF_VAR_db_type" "autonomous"
     echo_export "TF_VAR_db_user" "admin"
-    echo_export "TF_VAR_deploy_type" "public_compute"
-    echo_export "TF_VAR_java_framework" "springboot"
-    echo_export "TF_VAR_java_version" "25"
-    echo_export "TF_VAR_java_vm" "graalvm"
-    echo_export "TF_VAR_language" "java"
-    echo_export "TF_VAR_ui_type" "html"
-    # echo_export "OCI_STARTER_CREATION_DATE" "2026-03-11-19-21-20-127115"
-    # echo_export "OCI_STARTER_VERSION" "4.2"
-    # echo_export "OCI_STARTER_PARAMS" "prefix,java_framework,java_vm,java_version,ui_type,db_type,license_model,app_mode,mode,infra_as_code,db_password,oke_type,security,deploy_type,language"
+    echo_export "TF_VAR_deploy_type" "private_compute"
+    echo_export "TF_VAR_language" "python"
+    echo_export "TF_VAR_ui_type" "html" 
+    echo "# Synonym" >> $ENV_FILE
+    echo_export "DB_USER" "$TF_VAR_db_user"
+    echo_export "DB_PASSWORD" "$TF_VAR_db_password"
+    # echo_export "OCI_STARTER_CREATION_DATE" "2025-10-05-13-59-33-174669"
+    # echo_export "OCI_STARTER_VERSION" "4.1"
+    # echo_export "OCI_STARTER_PARAMS" "prefix,java_framework,java_vm,java_version,ui_type,db_type,license_model,mode,infra_as_code,db_password,oke_type,security,deploy_type,language"
     chmod 755 $ENV_FILE
     EOT
   }
@@ -116,10 +120,15 @@ resource "null_resource" "build_deploy" {
         EOT
   }
   depends_on = [
+    oci_apigateway_gateway.starter_apigw,
+    oci_core_instance.starter_bastion,
     oci_core_instance.starter_compute,
     oci_database_autonomous_database.starter_atp,
+    oci_objectstorage_bucket.starter_bucket,
     tls_private_key.ssh_key,  
-    null_resource.custom_dependency,  
+    oci_generative_ai_agent_agent_endpoint.starter_agent_endpoint,
+    oci_generative_ai_agent_knowledge_base.starter_agent_kb,
+    oci_generative_ai_agent_data_ingestion_job.starter_agent_ingestion_job,
     null_resource.tf_env  
   ]
 
@@ -143,11 +152,15 @@ resource "null_resource" "after_build" {
 
         $BIN_DIR/add_api_portal.sh
 
+        # Custom code after build
+        if [ -f $PROJECT_DIR/src/after_build.sh ]; then
+            $PROJECT_DIR/src/after_build.sh
+        fi
         title "Done"
-        $PROJECT_DIR/src/done.sh          
+        $BIN_DIR/done.sh          
         EOT
   }
-  depends_on = [      
+  depends_on = [
     null_resource.build_deploy
   ]
 
@@ -184,3 +197,4 @@ resource "null_resource" "before_destroy" {
     null_resource.after_build
   ]
 }
+
