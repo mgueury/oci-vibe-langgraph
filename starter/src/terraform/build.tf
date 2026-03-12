@@ -31,6 +31,7 @@ resource "null_resource" "tf_env" {
     echo_export "TF_VAR_db_password" "${coalesce(var.db_password,"-")}"
     echo_export "TF_VAR_license_model" "${coalesce(var.license_model,"-")}"
     echo_export "TF_VAR_compartment_ocid" "${coalesce(var.compartment_ocid,"-")}"  
+    echo_export "TF_VAR_region" "${coalesce(var.region,"-")}"      
     echo "# Terraform Locals" >> $ENV_FILE
     echo_export "BASTION_IP" "${local.local_bastion_ip}"
     echo_export "COMPUTE_IP" "${local.local_compute_ip}"
