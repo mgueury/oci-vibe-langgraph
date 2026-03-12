@@ -1,3 +1,7 @@
+import os
+from typing import Any
+
+import oracledb
 from fastmcp import FastMCP  # Import FastMCP, the quickstart server base
 
 mcp = FastMCP("Calculator Server")  # Initialize an MCP server instance with a descriptive name
@@ -6,6 +10,29 @@ mcp = FastMCP("Calculator Server")  # Initialize an MCP server instance with a d
 def add(a: int, b: int) -> int:
     """Add two numbers and return the result."""
     return a + b  # Simple arithmetic logic
+
+
+@mcp.tool()
+def get_dept_data() -> list[dict[str, Any]]:
+    """Return all rows from the DEPT table."""
+    user = os.getenv("DB_USER")
+    password = os.getenv("DB_PASSWORD")
+    dsn = os.getenv("DB_URL")
+
+    if not user or not password or not dsn:
+        raise ValueError("Missing DB_USER, DB_PASSWORD, or DB_URL environment variable")
+
+    connection = oracledb.connect(user=user, password=password, dsn=dsn)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT DEPTNO, DNAME, LOC FROM DEPT ORDER BY DEPTNO")
+            rows = cursor.fetchall()
+            return [
+                {"deptno": deptno, "dname": dname, "loc": loc}
+                for deptno, dname, loc in rows
+            ]
+    finally:
+        connection.close()
 
 if __name__ == "__main__":
     # mcp.run(transport="stdio")  # Run the server, using standard input/output for communication
