@@ -16,7 +16,7 @@ else
     append_tf_env
 
     # LiveLabs
-    export BASE_URL="https://${BASTION_IP}/${TF_VAR_prefix}"
+    export BASE_URL="http://${BASTION_IP}/"
     append_tf_env "export BASE_URL=\"$BASE_URL\""
 
     # Kubernetes
