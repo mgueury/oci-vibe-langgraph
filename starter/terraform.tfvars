@@ -12,11 +12,8 @@ license_model="__TO_FILL__"
 # Compartment
 compartment_ocid="__TO_FILL__"
 
-# RAG Storage 26ai
-# rag_storage="db26ai"
-# vault_ocid="__TO_FILL__"
-# vault_key_ocid="__TO_FILL__"
-
 # Uncomment to enable login in LangGraph application using OpenID via API Gateway and Confidential Application 
 # Needs OCI Identity Domain rights.
 # openid="true"
+# vault_ocid="__TO_FILL__"
+# vault_key_ocid="__TO_FILL__"
