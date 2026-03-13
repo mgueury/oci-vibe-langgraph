@@ -11,7 +11,7 @@ echo
 echo "URLs" > $FILE_DONE
 append_done "-----------------------------------------------------------------------"
 append_done "LangGraph Agent Chat:"
-append_done "${BASE_URL}/chat.html"
+append_done "${BASE_URL}chat.html"
 append_done
 if [ "$TF_VAR_openid" == "true" ]; then
     append_done "-----------------------------------------------------------------------"
