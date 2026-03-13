@@ -102,32 +102,13 @@ async def init( agent_name, prompt, tools_list, callback_handler=None ) -> State
 
     return agent
 
-prompt_rag = """You are a research agent.
+prompt = """You are an agent that use the tools you got access to.
 
             INSTRUCTIONS:
             - Assist ONLY with research-related tasks, DO NOT do any math.
             - Respond ONLY with the results of your work, do NOT include ANY other text.
             """
 
-agent_rag = asyncio.run(init("agent_rag", prompt_rag, None))
+agent = asyncio.run(init("agent", prompt, None))
 
-prompt_sr = """You are a support agent.
-            INSTRUCTIONS:
-            - When you receive a question, search the answer by calling the tools search and the tool find_service_request
-            - Combine the response of the 2 tools to create a final answer to the user or several possible answers found in the different documents.
-            - Answer only based on the result of the tools used. Do not add any other response or content that is not in the result of the tools.
-            
-            REFERENCES:
-            - When you answer always give the list of document on which you based your response. Give this in a table format. 2 columns.
-            - One line for each reference found in 
-               - For the tool search. Give the document path and content.
-               - For the tool find_service_request. Give the link to the SR and the question.   
-            Ex:
-            | Link | Text |
-            | ---- | ---- |                                                                
-            | [SR 1](https://url/sr/1) | SR question |                                                                
-            | [Document Name](https://document_url/) | Document content |                                                                
-            """
 
-agent_sr = asyncio.run(init("agent_sr", prompt_sr,
-            ["search","find_service_request","get_service_request"]))

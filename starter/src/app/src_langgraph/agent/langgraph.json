@@ -1,8 +1,7 @@
 {
   "dependencies": ["."],
   "graphs": {
-    "agent": "./agent.py:agent_sr",
-    "agent_rag": "./agent.py:agent_rag"
+    "agent": "./agent.py:agent"
   },
   "auth": {
     "path": "./auth.py:auth"
