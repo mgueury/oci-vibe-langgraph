@@ -217,7 +217,7 @@ if (SpeechRecognition && voiceInputButton) {
         isListening = false;
         voiceInputButton.setAttribute('aria-label', 'Start voice input');
         voiceInputButton.setAttribute('title', 'Speak your message');
-        voiceInputButton.content = '<img src="images/microphone.png">';
+        voiceInputButton.innerHTML = '<img src="images/microphone.png">';
     });
 
     recognition.addEventListener('error', (event) => {

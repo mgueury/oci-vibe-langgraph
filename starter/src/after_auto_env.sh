@@ -15,8 +15,8 @@ else
     append_tf_env "export TF_VAR_genai_embed_model=\"$TF_VAR_genai_embed_model\""
     append_tf_env
 
-    # LiveLabs
-    export BASE_URL="http://${BASTION_IP}/"
+    # Self-Signed Certificate for the IP address
+    export BASE_URL="https://${BASTION_IP}/"
     append_tf_env "export BASE_URL=\"$BASE_URL\""
 
     # Kubernetes
