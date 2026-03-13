@@ -202,7 +202,7 @@ if (SpeechRecognition && voiceInputButton) {
         isListening = true;
         voiceInputButton.setAttribute('aria-label', 'Stop voice input');
         voiceInputButton.setAttribute('title', 'Listening... click to stop');
-        voiceInputButton.textContent = '🛑';
+        voiceInputButton.textContent = '🔴';
     });
 
     recognition.addEventListener('result', (event) => {
@@ -217,7 +217,7 @@ if (SpeechRecognition && voiceInputButton) {
         isListening = false;
         voiceInputButton.setAttribute('aria-label', 'Start voice input');
         voiceInputButton.setAttribute('title', 'Speak your message');
-        voiceInputButton.textContent = '🎤';
+        voiceInputButton.textContent = '<img src="images/microphone.png">';
     });
 
     recognition.addEventListener('error', (event) => {
