@@ -10,6 +10,7 @@ const messagesEl = document.getElementById('messages');
 const chatForm = document.getElementById('chat-form');
 const chatInput = document.getElementById('chat-input');
 const spinnerContainer = document.getElementById('spinner-container');
+const micButton = document.getElementById('mic-button');
 
 // See https://docs.oracle.com/en-us/iaas/Content/APIGateway/Tasks/apigatewayusingjwttokens.htm#Using_JSON_Web_Tokens_JWTs_to_Add_Authentication_and_Authorization_to_API_Deployments__section_csrf_protection
 let csrfToken = "";
@@ -334,6 +335,52 @@ async function fetchUserInfo() {
     updateDisplay();
 }
 
+let recognition = null;
+
+function initRecognition() {
+    if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
+        micButton.style.display = 'none';
+        return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+        micButton.classList.add('recording');
+        chatInput.placeholder = 'Listening...';
+    };
+
+    recognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+            .map(result => result[0].transcript)
+            .join('');
+        chatInput.value = transcript;
+        chatInput.focus();
+    };
+
+    recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        micButton.classList.remove('recording');
+        chatInput.placeholder = 'Type your message...';
+    };
+
+    recognition.onend = () => {
+        micButton.classList.remove('recording');
+        chatInput.placeholder = 'Type your message...';
+    };
+}
+
+micButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (recognition) {
+        recognition.start();
+    }
+});
+
 // On page load
 // If the URL is in openid, get the userinfo from IDCS via APIGW
 
@@ -349,6 +396,7 @@ async function fetchUserInfo() {
         messagesEl.innerHTML = '<div class="message ai">Error: could not get thread_id from backend.</div>';
         chatInput.disabled = true;
     }
+    initRecognition();
     renderUserList();
     fetchAgents()
         .then(renderAgentList)

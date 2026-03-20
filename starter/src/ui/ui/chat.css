@@ -99,6 +99,23 @@ button img {
     height: 25px;
 }
 
+#mic-button {
+    background-color: #e0f7fa;
+    border-color: #00acc1;
+}
+
+#mic-button.recording {
+    background-color: #ff4444;
+    border-color: #cc0000;
+    animation: micPulse 1s infinite;
+}
+
+@keyframes micPulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
 .tool-calls {
     background: #eef4fc;
     padding: 8px;
