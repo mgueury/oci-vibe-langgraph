@@ -66,7 +66,7 @@ async def init( agent_name, prompt, tools_list, callback_handler=None ) -> State
             print(f"Connecting to MCP {attempt}...")
             client = MultiServerMCPClient(
                 {
-                    "McpServerRag": {
+                    "McpServer": {
                         "transport": "streamable_http",
                         "url": MCP_SERVER_URL,                     
                     },

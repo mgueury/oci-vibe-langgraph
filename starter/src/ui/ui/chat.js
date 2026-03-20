@@ -9,7 +9,6 @@ let last_message_id = -1;
 const messagesEl = document.getElementById('messages');
 const chatForm = document.getElementById('chat-form');
 const chatInput = document.getElementById('chat-input');
-const voiceInputButton = document.getElementById('voice-input');
 const spinnerContainer = document.getElementById('spinner-container');
 
 // See https://docs.oracle.com/en-us/iaas/Content/APIGateway/Tasks/apigatewayusingjwttokens.htm#Using_JSON_Web_Tokens_JWTs_to_Add_Authentication_and_Authorization_to_API_Deployments__section_csrf_protection
@@ -185,55 +184,6 @@ async function getThreadId() {
 
 function addMessage(msgObj) {
     renderMessage(msgObj);
-}
-
-// -- Voice input (speech-to-text) ---------------------------------
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-let recognition = null;
-let isListening = false;
-
-if (SpeechRecognition && voiceInputButton) {
-    recognition = new SpeechRecognition();
-    recognition.lang = navigator.language || 'en-US';
-    recognition.interimResults = true;
-    recognition.continuous = false;
-
-    recognition.addEventListener('start', () => {
-        isListening = true;
-        voiceInputButton.setAttribute('aria-label', 'Stop voice input');
-        voiceInputButton.setAttribute('title', 'Listening... click to stop');
-        voiceInputButton.textContent = '🔴';
-    });
-
-    recognition.addEventListener('result', (event) => {
-        let transcript = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-            transcript += event.results[i][0].transcript;
-        }
-        chatInput.value = transcript.trim();
-    });
-
-    recognition.addEventListener('end', () => {
-        isListening = false;
-        voiceInputButton.setAttribute('aria-label', 'Start voice input');
-        voiceInputButton.setAttribute('title', 'Speak your message');
-        voiceInputButton.innerHTML = '<img src="images/microphone.png">';
-    });
-
-    recognition.addEventListener('error', (event) => {
-        console.log('Speech recognition error:', event.error);
-    });
-
-    voiceInputButton.addEventListener('click', () => {
-        if (isListening) {
-            recognition.stop();
-            return;
-        }
-        recognition.start();
-    });
-} else if (voiceInputButton) {
-    voiceInputButton.disabled = true;
-    voiceInputButton.setAttribute('title', 'Voice input is not supported in this browser');
 }
 
 chatForm.addEventListener('submit', function (e) {
