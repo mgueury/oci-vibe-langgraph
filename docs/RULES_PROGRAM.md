@@ -33,5 +33,5 @@ These rules define behavior specific to this repository implementation under `st
 ## Routing and deployment rules
 
 - Compute NGINX routing is declared in `src/compute/nginx_app.locations`.
-- `/langgraph/server/` is proxied to local port `2024`.
+- `/app/` is proxied to local port `2024`.
 - Kubernetes manifests are maintained per service in `src/app/k8s_langgraph.yaml`, `src/app/k8s_mcp_server.yaml`, and `src/ui/ui.yaml`.
