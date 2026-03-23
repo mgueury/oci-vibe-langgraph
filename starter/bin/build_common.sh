@@ -16,7 +16,7 @@ if [ "$APP_NAME" == "app" ]; then
   APP_SRC_DIR="src"
   APP_COMPUTE_DIR="app"
 else
-  APP_SRC_DIR="src_${APP_NAME}"
+  APP_SRC_DIR="${APP_NAME}"
   APP_COMPUTE_DIR="app/${APP_NAME}"
 fi
 cd $SCRIPT_DIR
