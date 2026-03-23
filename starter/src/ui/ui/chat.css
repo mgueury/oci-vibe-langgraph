@@ -261,3 +261,6 @@ nav li:hover {
 #reset:hover {
     background: #fff;
 }
+svg {
+    min-height: 300px;
+}
