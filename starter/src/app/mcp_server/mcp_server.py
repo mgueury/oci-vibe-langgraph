@@ -55,11 +55,11 @@ def get_emp() -> list[dict[str, Any]]:
     log( "<get_emp>: connected to db")
     try:
         with connection.cursor() as cursor:
-            cursor.execute("SELECT EMPNO, ENAME, JOB, DEPTNO FROM EMP ORDER BY EMPNO")
+            cursor.execute("SELECT EMPNO, ENAME, JOB, SALARY, DEPTNO FROM EMP ORDER BY EMPNO")
             rows = cursor.fetchall()
             return [
-                {"empno": empno, "ename": ename, "job": job, "deptno": deptno}
-                for empno, ename, job, deptno in rows
+                {"empno": empno, "ename": ename, "job": job, "salary": salary, "deptno": deptno}
+                for empno, ename, job, salary, deptno in rows
             ]
     finally:
         connection.close()
