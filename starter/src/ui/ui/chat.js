@@ -9,7 +9,8 @@ let BASE_URL = '/app';
 let currentBackend = 'LangGraph';
 const backends = [
     { name: 'LangGraph', baseUrl: '/app' },
-    { name: 'Responses', baseUrl: '/app2' }
+    { name: 'Responses', baseUrl: '/app2' },
+    { name: 'OpenID LangGraph', baseUrl: '/openid/server' }
 ];
 let currentAgent = 'agent';
 let currentUser = 'customer';
@@ -388,6 +389,7 @@ function setCurrentUser(user) {
 }
 
 async function fetchUserInfo() {
+    BASE_URL = '/openid/server';
     const response = await fetch('/openid/userinfo', {
         method: 'GET',
         credentials: 'include'
