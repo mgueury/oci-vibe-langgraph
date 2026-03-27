@@ -77,5 +77,5 @@ if hasattr(mcp, "custom_route"):
 
 if __name__ == "__main__":
     # mcp.run(transport="stdio")  # Run the server, using standard input/output for communication
-    port = int(os.getenv("PORT", "8080"))
+    port = int(os.getenv("PORT", "2025"))
     mcp.run(transport="http", host="0.0.0.0", port=port)
