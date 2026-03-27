@@ -6,6 +6,11 @@ mermaid.initialize({ startOnLoad: false });
 // -- Variables ----------------------------------------------------------------- 
 
 let BASE_URL = '/app';
+let currentBackend = 'LangGraph';
+const backends = [
+    { name: 'LangGraph', baseUrl: '/app' },
+    { name: 'Responses', baseUrl: '/app2' }
+];
 let currentAgent = 'agent';
 let currentUser = 'customer';
 const users = ['employee', 'customer'];
@@ -265,6 +270,19 @@ document.addEventListener('keydown', function (e) {
 });
 
 // Users section
+function renderBackendList() {
+    const backendList = document.getElementById('backendList');
+    backendList.innerHTML = '';
+    backends.forEach(backend => {
+        const li = document.createElement('li');
+        li.textContent = backend.name;
+        li.tabIndex = 0;
+        li.setAttribute('aria-current', backend.name === currentBackend ? 'true' : 'false');
+        li.addEventListener('click', () => setCurrentBackend(backend.name));
+        backendList.appendChild(li);
+    });
+}
+
 function renderUserList() {
     const userList = document.getElementById('userList');
     userList.innerHTML = '';
@@ -322,8 +340,34 @@ function renderAgentList(agents) {
 
 // Updating display
 function updateDisplay() {
-    document.getElementById('currentDisplay').textContent = `Agent: ${currentAgent} - User: ${currentUser}`;
+    document.getElementById('currentDisplay').textContent = `Backend: ${currentBackend} - Agent: ${currentAgent} - User: ${currentUser}`;
 }
+
+async function setCurrentBackend(backendName) {
+    currentBackend = backendName;
+    const backend = backends.find(b => b.name === backendName);
+    if (backend) {
+        BASE_URL = backend.baseUrl;
+    }
+
+    messagesEl.innerHTML = '';
+    thread_id = await getThreadId();
+    last_message_id = 0;
+    if (!thread_id) {
+        messagesEl.innerHTML = '<div class="message ai">Error: could not get thread_id from backend.</div>';
+        chatInput.disabled = true;
+    } else {
+        chatInput.disabled = false;
+    }
+
+    updateDisplay();
+    nav.classList.remove('open');
+    hamburger.setAttribute('aria-expanded', 'false');
+    fetchAgents().then(renderAgentList);
+    renderUserList();
+    renderBackendList();
+}
+
 function setCurrentAgent(agentName) {
     currentAgent = agentName;
     updateDisplay();
@@ -344,7 +388,6 @@ function setCurrentUser(user) {
 }
 
 async function fetchUserInfo() {
-    BASE_URL = '/openid/server';
     const response = await fetch('/openid/userinfo', {
         method: 'GET',
         credentials: 'include'
@@ -419,6 +462,7 @@ micButton.addEventListener('click', (e) => {
         chatInput.disabled = true;
     }
     initRecognition();
+    renderBackendList();
     renderUserList();
     fetchAgents()
         .then(renderAgentList)
