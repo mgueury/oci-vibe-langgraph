@@ -1,102 +1,41 @@
-"""Responses API example aligned with langgraph/agent behavior.
+/*
+response_stream = client.responses.create(
+    model="openai.gpt-4.1",
+    tools=[
+        {
+            "type": "mcp",
+            "server_label": "stripe",
+            "server_url": "https://mcp.stripe.com",
+            "authorization": "$STRIPE_OAUTH_ACCESS_TOKEN" # just the token, don't include the "Bearer " phrase in the value
+        },
+    ],
+    input="Create a payment link for $20",
+    stream=True,
+    store=False,
+)
 
-It connects to an MCP server (with retries), optionally filters tools,
-and sends a prompt that encourages tool usage.
-"""
+response_stream = client.responses.create(
+    model="openai.gpt-5.4",
+    tools=[
+        {
+            "type": "mcp",
+            "server_label": "dmcp",
+            "server_description": "A Dungeons and Dragons MCP server to assist with dice rolling.",
+            "server_url": "https://mcp.deepwiki.com/mcp",
+            "require_approval": "never",
+            "allowed_tools": ["roll"],
+        },
+    ],
+    input="Roll 2d4+1",
+    stream=True,
+    store=False,
+)
 
-import os
-import time
-from typing import Iterable
+response = client.responses.create(
+    model="openai.gpt-5.4",
+    tools=[{"type": "web_search"}],
+    input="What was a positive news story on 2025-11-14?",
+)
+print(response)
 
-from openai import OpenAI
-
-from common import print_example_summary, print_runtime_config
-from config import BASE_URL, MODEL_ID
-from config_private import KEY1, PROJECT_ID
-
-TEMPERATURE = 0.0
-MCP_SERVER_URL = os.getenv("MCP_SERVER_URL")
-
-
-PROMPT = """You are an agent that use the tools you got access to.
-INSTRUCTIONS:
-- Assist ONLY with research-related tasks, DO NOT do any math.
-- When using a MCP tool, take care not to pass empty parameters name like "", or {"":{}}
-- To draw a diagram, use mermaid
-- If not, use MarkDown to give a clear and short answer to the user.
-"""
-
-
-def build_tools(tools_list: Iterable[str] | None) -> list[dict]:
-    """Build MCP tool configuration for OpenAI Responses API."""
-    if not MCP_SERVER_URL:
-        raise RuntimeError("MCP_SERVER_URL environment variable is required")
-
-    tool = {
-        "type": "mcp",
-        "server_label": "McpServer",
-        "server_url": MCP_SERVER_URL,
-        "require_approval": "never",
-    }
-
-    if tools_list:
-        tool["allowed_tools"] = list(tools_list)
-
-    return [tool]
-
-
-def create_response_with_retry(
-    client: OpenAI,
-    request: str,
-    tools_list: Iterable[str] | None,
-    max_attempts: int = 30,
-    delay: int = 10,
-):
-    """Retry Responses API calls to tolerate MCP server startup delays."""
-    last_error = None
-
-    for attempt in range(1, max_attempts + 1):
-        try:
-            print(f"Connecting to MCP {attempt}...")
-            return client.responses.create(
-                model=MODEL_ID,
-                temperature=TEMPERATURE,
-                instructions=PROMPT,
-                input=request,
-                tools=build_tools(tools_list),
-            )
-        except Exception as exc:  # noqa: BLE001
-            last_error = exc
-            print(f"Connection failed {attempt}: {exc}")
-            if attempt < max_attempts:
-                print(f"Waiting for {delay} seconds before the next attempt...")
-                time.sleep(delay)
-
-    raise RuntimeError(f"ERROR: connection to MCP failed ({last_error})")
-
-
-def main() -> None:
-    """Run a Responses API request with MCP integration and retries."""
-    print_runtime_config()
-    print("")
-    print_example_summary("Responses API with MCP tools and retry logic.")
-    print("")
-
-    client = OpenAI(
-        base_url=BASE_URL,
-        api_key=KEY1,
-        project=PROJECT_ID,
-    )
-
-    request = "List the available departments."
-    response = create_response_with_retry(client, request, tools_list=None)
-
-    print("Request:", request)
-    print(response.output_text)
-    print("")
-    print("Full response:", response)
-    print("")
-
-
-if __name__ == "__main__":
-    main()
+starter/src/app/openai/responses.py

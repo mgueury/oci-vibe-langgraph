@@ -60,11 +60,15 @@ def runs_stream(thread_id: str, payload: dict[str, Any]):
         question = messages[-1].get("content", "")
 
     def event_stream():
+        print("<event_stream> question=", question)
         response = client.responses.create(
             model=MODEL_ID,
             temperature=0.0,
             input=question,
         )
+        print("<event_stream>output_text=", response.output_text)
+        print("<event_stream> response=", response)
+
         event = {
             "messages": {
                 "1": {
