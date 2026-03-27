@@ -155,7 +155,7 @@ resource "oci_core_security_list" "starter_security_list" {
 
   ingress_security_rules {
     protocol  = "6" // tcp
-    source    = var.public_ip_filter
+    source    = "0.0.0.0/0"
     stateless = false
 
     tcp_options {
