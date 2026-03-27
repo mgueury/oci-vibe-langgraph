@@ -64,6 +64,18 @@ def get_emp() -> list[dict[str, Any]]:
     finally:
         connection.close()
 
+
+# Optional HTTP probe endpoints (when supported by installed FastMCP version)
+if hasattr(mcp, "custom_route"):
+    @mcp.custom_route("/health", methods=["GET"])
+    async def health(_request):
+        return {"status": "ok"}
+
+    @mcp.custom_route("/ready", methods=["GET"])
+    async def ready(_request):
+        return {"status": "ready"}
+
 if __name__ == "__main__":
     # mcp.run(transport="stdio")  # Run the server, using standard input/output for communication
-    mcp.run(transport="http", host="0.0.0.0", port=2025)
+    port = int(os.getenv("PORT", "8080"))
+    mcp.run(transport="http", host="0.0.0.0", port=port)

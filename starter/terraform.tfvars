@@ -17,3 +17,7 @@ compartment_ocid="__TO_FILL__"
 # openid="true"
 # vault_ocid="__TO_FILL__"
 # vault_key_ocid="__TO_FILL__"
+
+# Responses API
+project_ocid="__TO_FILL__"
+genai_api_key="__TO_FILL__"
