@@ -14,6 +14,7 @@ MODEL_ID = "openai.gpt-oss-120b"
 BASE_URL = f"https://inference.generativeai.{REGION}.oci.oraclecloud.com/20231130/openai/v1"
 PROJECT_OCID = os.environ.get("TF_VAR_project_ocid")
 GENAI_API_KEY = os.environ.get("TF_VAR_genai_api_key")
+MCP_SERVER_URL = os.environ.get("MCP_SERVER_URL")
 
 client = OpenAI(
     base_url=BASE_URL,
@@ -23,6 +24,23 @@ client = OpenAI(
 
 app = FastAPI()
 
+
+def log(*args, **kwargs):
+    print(*args, **kwargs, flush=True)
+
+
+def get_tools() -> list[dict[str, Any]]:
+    if not MCP_SERVER_URL:
+        return []
+    return [
+        {
+            "type": "mcp",
+            "server_label": "mcp",
+            "server_url": MCP_SERVER_URL,
+            "require_approval": "never",
+        }
+    ]
+
 # Simple in-memory state for demo compatibility with chat.js protocol.
 THREADS: dict[str, dict[str, Any]] = {}
 
@@ -31,6 +49,7 @@ def chat(q: str):
     response = client.responses.create(
         model=MODEL_ID,
         temperature=0.0,
+        tools=get_tools(),
         input=q,
     )
     return response.output_text
@@ -40,7 +59,7 @@ def chat(q: str):
 @app.post("/app/threads")
 def create_thread() -> dict[str, str]:
     thread_id = str(uuid.uuid4())
-    THREADS[thread_id] = {}
+    THREADS[thread_id] = {"next_message_id": 1}
     return {"thread_id": thread_id}
 
 
@@ -54,24 +73,33 @@ def assistants_search() -> list[dict[str, str]]:
 @app.post("/threads/{thread_id}/runs/stream")
 @app.post("/app/threads/{thread_id}/runs/stream")
 def runs_stream(thread_id: str, payload: dict[str, Any]):
+    if thread_id not in THREADS:
+        THREADS[thread_id] = {"next_message_id": 1}
+
     messages = payload.get("input", {}).get("messages", [])
+    log("<runs_stream> messages=", messages)
     question = ""
     if messages:
         question = messages[-1].get("content", "")
+    log("<runs_stream> question=", question)
 
     def event_stream():
-        print("<event_stream> question=", question)
+        log("<event_stream> question=", question)
         response = client.responses.create(
             model=MODEL_ID,
             temperature=0.0,
+            tools=get_tools(),
             input=question,
         )
-        print("<event_stream>output_text=", response.output_text)
-        print("<event_stream> response=", response)
+        log("<event_stream> output_text=", response.output_text)
+        log("<event_stream> response=", response)
+
+        message_id = int(THREADS[thread_id].get("next_message_id", 1))
+        THREADS[thread_id]["next_message_id"] = message_id + 1
 
         event = {
             "messages": {
-                "1": {
+                str(message_id): {
                     "type": "ai",
                     "content": response.output_text,
                 }
