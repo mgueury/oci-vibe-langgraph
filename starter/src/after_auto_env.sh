@@ -28,7 +28,7 @@ else
         append_tf_env "export MCP_SERVER_URL=\"http://mcp-server-service:2025/mcp\""
     else 
         append_tf_env "export LANGGRAPH_URL=\"http://127.0.0.1:8080\""
-        # append_tf_env "export MCP_SERVER_URL=\"http://localhost:2025/mcp\""
+        append_tf_env "# export MCP_SERVER_URL=\"http://localhost:2025/mcp\""
         append_tf_env "export MCP_SERVER_URL=\"http://$BASTION_IP:2025/mcp\""
     fi
     export LANGGRAPH_APIKEY="##TF_VAR_db_password##"
