@@ -113,7 +113,7 @@ def runs_stream(thread_id: str, payload: dict[str, Any], request: Request):
                     "messages": {
                         str(message_id): {
                             "type": "ai",
-                            "content": content,
+                            "content": delta,
                         }
                     }
                 }
