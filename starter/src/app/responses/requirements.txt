@@ -3,8 +3,9 @@ fastmcp
 fastapi
 uvicorn
 
-#DB26ai
+# Oracle
 oracledb
+oci-genai-auth
 
 # Langgraph
 langchain_oci

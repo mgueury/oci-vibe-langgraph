@@ -6,11 +6,11 @@ mermaid.initialize({ startOnLoad: false });
 // -- Variables ----------------------------------------------------------------- 
 
 let BASE_URL = '/responses';
-let currentBackend = 'LangGraph';
+let currentBackend = 'Responses';
 const backends = [
     { name: 'LangGraph', baseUrl: '/langgraph' },
     { name: 'Responses', baseUrl: '/responses' },
-    { name: 'OpenID LangGraph', baseUrl: '/openid/langgraph' }
+    { name: 'OpenID LangGraph', baseUrl: '/openid/langgraph' },
     { name: 'OpenID Responses', baseUrl: '/openid/responses' }
 ];
 let currentAgent = 'agent';

@@ -7,7 +7,7 @@ from typing import Any
 from fastapi import FastAPI
 from openai import OpenAI
 from fastapi.responses import StreamingResponse
-from oci_genai_auth import OciResourcePrincipalAuth
+from oci_genai_auth import OciInstancePrincipalAuth
 import httpx
 
 # Defaults can be overridden by AGENT_HUB_REGION.
@@ -22,7 +22,7 @@ MCP_SERVER_URL = os.environ.get("MCP_SERVER_URL")
 client = OpenAI(
     base_url=BASE_URL,
     api_key='not-used',
-    http_client=httpx.Client(auth=OciResourcePrincipalAuth()),
+    http_client=httpx.Client(auth=OciInstancePrincipalAuth()),
     project=PROJECT_OCID,
 )
 
