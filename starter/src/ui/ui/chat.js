@@ -8,9 +8,10 @@ mermaid.initialize({ startOnLoad: false });
 let BASE_URL = '/app2';
 let currentBackend = 'LangGraph';
 const backends = [
-    { name: 'LangGraph', baseUrl: '/app' },
-    { name: 'Responses', baseUrl: '/app2' },
-    { name: 'OpenID LangGraph', baseUrl: '/openid/server' }
+    { name: 'LangGraph', baseUrl: '/langgraph' },
+    { name: 'Responses', baseUrl: '/responses' },
+    { name: 'OpenID LangGraph', baseUrl: '/openid/langgraph' }
+    { name: 'OpenID Responses', baseUrl: '/openid/responses' }
 ];
 let currentAgent = 'agent';
 let currentUser = 'customer';

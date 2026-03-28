@@ -1,11 +1,14 @@
 import json
 import os
+from urllib.parse import urlparse
 import uuid
 from typing import Any
 
 from fastapi import FastAPI
 from openai import OpenAI
 from fastapi.responses import StreamingResponse
+from oci_genai_auth import OciResourcePrincipalAuth
+import httpx
 
 # Defaults can be overridden by AGENT_HUB_REGION.
 REGION = "us-chicago-1"
@@ -18,7 +21,8 @@ MCP_SERVER_URL = os.environ.get("MCP_SERVER_URL")
 
 client = OpenAI(
     base_url=BASE_URL,
-    api_key=GENAI_API_KEY,
+    api_key='not-used',
+    http_client=httpx.Client(auth=OciResourcePrincipalAuth()),
     project=PROJECT_OCID,
 )
 
@@ -32,6 +36,16 @@ def log(*args, **kwargs):
 def get_tools() -> list[dict[str, Any]]:
     if not MCP_SERVER_URL:
         return []
+
+    parsed = urlparse(MCP_SERVER_URL)
+    host = (parsed.hostname or "").lower()
+    if host in {"localhost", "127.0.0.1", "::1"}:
+        log(
+            "<get_tools> MCP_SERVER_URL points to localhost; skipping MCP tool "
+            "because the model-side connector cannot reach local addresses."
+        )
+        return []
+
     return [
         {
             "type": "mcp",
