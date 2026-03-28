@@ -89,6 +89,7 @@ def runs_stream(thread_id: str, payload: dict[str, Any], request: Request):
         "temperature": 0.0,
         "tools": get_tools(),
         "input": question,
+        "stream": True,
     }
     if authorization and authorization.lower().startswith("bearer "):
         response_kwargs["extra_headers"] = {"Authorization": authorization}
@@ -96,23 +97,48 @@ def runs_stream(thread_id: str, payload: dict[str, Any], request: Request):
 
     def event_stream():
         log("<event_stream> question=", question)
-        response = client.responses.create(**response_kwargs)
-        log("<event_stream> output_text=", response.output_text)
-        log("<event_stream> response=", response)
-
+        response_stream = client.responses.create(**response_kwargs)
         message_id = int(THREADS[thread_id].get("next_message_id", 1))
-        THREADS[thread_id]["next_message_id"] = message_id + 1
+        content = ""
+        emitted = False
 
-        event = {
-            "messages": {
-                str(message_id): {
-                    "type": "ai",
-                    "content": response.output_text,
+        for stream_event in response_stream:
+            event_type = getattr(stream_event, "type", "")
+            if event_type == "response.output_text.delta":
+                delta = getattr(stream_event, "delta", "") or ""
+                if not delta:
+                    continue
+                content += delta
+                event = {
+                    "messages": {
+                        str(message_id): {
+                            "type": "ai",
+                            "content": content,
+                        }
+                    }
+                }
+                emitted = True
+                # chat.js splits on CRLF + CRLF and expects lines starting with "data:"
+                yield f"data: {json.dumps(event)}\r\n\r\n"
+                message_id += 1
+
+        if not emitted:
+            response = response_stream.get_final_response()
+            content = response.output_text
+            log("<event_stream> output_text=", content)
+            log("<event_stream> response=", response)
+            event = {
+                "messages": {
+                    str(message_id): {
+                        "type": "ai",
+                        "content": content,
+                    }
                 }
             }
-        }
-        # chat.js splits on CRLF + CRLF and expects lines starting with "data:"
-        yield f"data: {json.dumps(event)}\r\n\r\n"
+            yield f"data: {json.dumps(event)}\r\n\r\n"
+            message_id += 1
+
+        THREADS[thread_id]["next_message_id"] = message_id
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
