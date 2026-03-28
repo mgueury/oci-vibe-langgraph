@@ -122,7 +122,6 @@ def runs_stream(thread_id: str, payload: dict[str, Any], request: Request):
         response_stream = client.responses.create(**response_kwargs)
         message_id = int(THREADS[thread_id].get("next_message_id", 1))
         content = ""
-        emitted = False
 
         for stream_event in response_stream:
             event_type = getattr(stream_event, "type", "")
@@ -197,25 +196,17 @@ def runs_stream(thread_id: str, payload: dict[str, Any], request: Request):
                 if not delta:
                     continue
                 content += delta
-                emitted = True
-                yield _emit({"type": "ai", "content": delta}, message_id)
-                message_id += 1
+                continue
 
-        if not emitted:
+        if not content:
             response = response_stream.get_final_response()
             content = response.output_text
             log("<event_stream> output_text=", content)
             log("<event_stream> response=", response)
-            event = {
-                "messages": {
-                    str(message_id): {
-                        "type": "ai",
-                        "content": content,
-                    }
-                }
-            }
-            yield f"data: {json.dumps(event)}\r\n\r\n"
-            message_id += 1
+
+        # Emit AI answer once (no per-delta messages)
+        yield _emit({"type": "ai", "content": content}, message_id)
+        message_id += 1
 
         THREADS[thread_id]["next_message_id"] = message_id
 
