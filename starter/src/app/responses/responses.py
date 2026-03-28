@@ -1,14 +1,11 @@
 import json
 import os
-from urllib.parse import urlparse
 import uuid
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from openai import OpenAI
 from fastapi.responses import StreamingResponse
-from oci_genai_auth import OciInstancePrincipalAuth
-import httpx
 
 # Defaults can be overridden by AGENT_HUB_REGION.
 REGION = "us-chicago-1"
@@ -21,8 +18,7 @@ MCP_SERVER_URL = os.environ.get("MCP_SERVER_URL")
 
 client = OpenAI(
     base_url=BASE_URL,
-    api_key='not-used',
-    http_client=httpx.Client(auth=OciInstancePrincipalAuth()),
+    api_key=GENAI_API_KEY,
     project=PROJECT_OCID,
 )
 
@@ -36,16 +32,6 @@ def log(*args, **kwargs):
 def get_tools() -> list[dict[str, Any]]:
     if not MCP_SERVER_URL:
         return []
-
-    parsed = urlparse(MCP_SERVER_URL)
-    host = (parsed.hostname or "").lower()
-    if host in {"localhost", "127.0.0.1", "::1"}:
-        log(
-            "<get_tools> MCP_SERVER_URL points to localhost; skipping MCP tool "
-            "because the model-side connector cannot reach local addresses."
-        )
-        return []
-
     return [
         {
             "type": "mcp",
@@ -86,7 +72,7 @@ def assistants_search() -> list[dict[str, str]]:
 
 @app.post("/threads/{thread_id}/runs/stream")
 @app.post("/app/threads/{thread_id}/runs/stream")
-def runs_stream(thread_id: str, payload: dict[str, Any]):
+def runs_stream(thread_id: str, payload: dict[str, Any], request: Request):
     if thread_id not in THREADS:
         THREADS[thread_id] = {"next_message_id": 1}
 
@@ -97,14 +83,20 @@ def runs_stream(thread_id: str, payload: dict[str, Any]):
         question = messages[-1].get("content", "")
     log("<runs_stream> question=", question)
 
+    authorization = request.headers.get("authorization")
+    response_kwargs: dict[str, Any] = {
+        "model": MODEL_ID,
+        "temperature": 0.0,
+        "tools": get_tools(),
+        "input": question,
+    }
+    if authorization and authorization.lower().startswith("bearer "):
+        response_kwargs["extra_headers"] = {"Authorization": authorization}
+        log("<runs_stream> forwarding bearer authorization header")
+
     def event_stream():
         log("<event_stream> question=", question)
-        response = client.responses.create(
-            model=MODEL_ID,
-            temperature=0.0,
-            tools=get_tools(),
-            input=question,
-        )
+        response = client.responses.create(**response_kwargs)
         log("<event_stream> output_text=", response.output_text)
         log("<event_stream> response=", response)
 
