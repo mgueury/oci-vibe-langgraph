@@ -95,6 +95,28 @@ def runs_stream(thread_id: str, payload: dict[str, Any], request: Request):
         response_kwargs["extra_headers"] = {"Authorization": authorization}
         log("<runs_stream> forwarding bearer authorization header")
 
+    def _to_dict(obj: Any) -> dict[str, Any]:
+        if obj is None:
+            return {}
+        if isinstance(obj, dict):
+            return obj
+        if hasattr(obj, "model_dump"):
+            try:
+                return obj.model_dump()
+            except Exception:
+                pass
+        if hasattr(obj, "dict"):
+            try:
+                return obj.dict()
+            except Exception:
+                pass
+        return {}
+
+    def _emit(event_payload: dict[str, Any], message_id: int):
+        event = {"messages": {str(message_id): event_payload}}
+        # chat.js splits on CRLF + CRLF and expects lines starting with "data:"
+        return f"data: {json.dumps(event)}\r\n\r\n"
+
     def event_stream():
         log("<event_stream> question=", question)
         response_stream = client.responses.create(**response_kwargs)
@@ -104,22 +126,79 @@ def runs_stream(thread_id: str, payload: dict[str, Any], request: Request):
 
         for stream_event in response_stream:
             event_type = getattr(stream_event, "type", "")
+
+            if event_type == "response.output_item.done":
+                item = _to_dict(getattr(stream_event, "item", None))
+                item_type = item.get("type", "")
+
+                # Surface tool calls to the end-user UI.
+                if item_type in {"function_call", "mcp_call", "web_search_call"}:
+                    tool_name = (
+                        item.get("name")
+                        or item.get("tool_name")
+                        or item.get("server_tool_name")
+                        or item_type
+                    )
+                    tool_args = (
+                        item.get("arguments")
+                        or item.get("args")
+                        or item.get("input")
+                        or {}
+                    )
+                    if isinstance(tool_args, str):
+                        try:
+                            tool_args = json.loads(tool_args)
+                        except Exception:
+                            tool_args = {"raw": tool_args}
+
+                    yield _emit(
+                        {
+                            "type": "ai",
+                            "tool_calls": [
+                                {
+                                    "name": tool_name,
+                                    "args": tool_args,
+                                }
+                            ],
+                        },
+                        message_id,
+                    )
+                    message_id += 1
+
+                # Surface tool results to the end-user UI.
+                elif item_type in {"function_call_output", "mcp_call_output", "tool_result"}:
+                    tool_name = (
+                        item.get("name")
+                        or item.get("tool_name")
+                        or item.get("server_tool_name")
+                        or "tool"
+                    )
+                    tool_result = item.get("output") or item.get("result") or item.get("content")
+                    structured_content: dict[str, Any] = {}
+                    if isinstance(tool_result, (list, dict)):
+                        structured_content["result"] = tool_result
+                    else:
+                        structured_content["response"] = str(tool_result or "")
+
+                    yield _emit(
+                        {
+                            "type": "tool",
+                            "name": tool_name,
+                            "artifact": {
+                                "structured_content": structured_content,
+                            },
+                        },
+                        message_id,
+                    )
+                    message_id += 1
+
             if event_type == "response.output_text.delta":
                 delta = getattr(stream_event, "delta", "") or ""
                 if not delta:
                     continue
                 content += delta
-                event = {
-                    "messages": {
-                        str(message_id): {
-                            "type": "ai",
-                            "content": delta,
-                        }
-                    }
-                }
                 emitted = True
-                # chat.js splits on CRLF + CRLF and expects lines starting with "data:"
-                yield f"data: {json.dumps(event)}\r\n\r\n"
+                yield _emit({"type": "ai", "content": delta}, message_id)
                 message_id += 1
 
         if not emitted:
