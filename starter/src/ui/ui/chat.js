@@ -5,7 +5,7 @@ mermaid.initialize({ startOnLoad: false });
 
 // -- Variables ----------------------------------------------------------------- 
 
-let BASE_URL = '/app2';
+let BASE_URL = '/responses';
 let currentBackend = 'LangGraph';
 const backends = [
     { name: 'LangGraph', baseUrl: '/langgraph' },
@@ -470,5 +470,6 @@ micButton.addEventListener('click', (e) => {
     fetchAgents()
         .then(renderAgentList)
         .catch(error => alert("Could not load agents: " + error));
+    updateDisplay();
 })();
 
