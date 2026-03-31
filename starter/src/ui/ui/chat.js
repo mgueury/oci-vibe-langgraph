@@ -1,6 +1,6 @@
 // -- Import  --------------------------------------------------------------- 
 
-import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
 mermaid.initialize({ startOnLoad: false });
 
 // -- Variables ----------------------------------------------------------------- 
@@ -100,14 +100,7 @@ async function renderMessage(msgObj) {
         innerHTML = `<div class="bubble"><div class="meta">You</div>${renderMarkdown(msgObj.content)}</div>`;
     } else if (msgObj.type === 'ai') {
         if (msgObj.content) {
-            innerHTML = `<div class="bubble"><div class="meta">AI</div>${await renderContent(msgObj.content)}`;
-            if (msgObj.tool_calls && msgObj.tool_calls.length > 0) {
-                let tools = msgObj.tool_calls.map(t =>
-                    `<div><b>${t.name}</b> &rarr; <code>${JSON.stringify(t.args)}</code></div>`
-                ).join('');
-                innerHTML += `<div class="tool-calls">${tools}</div>`;
-            }
-            innerHTML += `</div>`;
+            innerHTML = `<div class="bubble"><div class="meta">AI</div>${await renderContent(msgObj.content)}</div>`;
         } else if (msgObj.tool_calls && msgObj.tool_calls.length > 0) {
             let bubble = `<div class="bubble"><div class="meta">Tool Calls</div>`;
             let tools = msgObj.tool_calls.map(t =>
