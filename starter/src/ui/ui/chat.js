@@ -67,6 +67,17 @@ function scrollToBottom() {
     document.getElementById('spinner-container').scrollIntoView({ behavior: "smooth" });
 }
 
+function autoGrowTextarea() {
+    if (!chatInput) return;
+    chatInput.style.height = 'auto';
+    chatInput.style.height = `${chatInput.scrollHeight}px`;
+}
+
+if (chatInput) {
+    chatInput.addEventListener('input', autoGrowTextarea);
+    autoGrowTextarea();
+}
+
 function renderJsTable(data) {
     if (!Array.isArray(data) || data.length === 0) return "<em>(No data)</em>";
 
