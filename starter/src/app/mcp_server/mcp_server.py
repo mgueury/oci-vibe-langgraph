@@ -65,6 +65,16 @@ def _meeting_sort_key(m: dict[str, Any]) -> tuple[int, str]:
     return (WEEK_DAYS.index(m["day"]), m["time"])
 
 
+def _free_slots() -> list[dict[str, str]]:
+    used = {(m["day"], m["time"]) for m in AGENDA}
+    slots: list[dict[str, str]] = []
+    for day in WEEK_DAYS:
+        for hour in HOURS_BY_DAY[day]:
+            if (day, hour) not in used:
+                slots.append({"day": day, "time": hour})
+    return slots
+
+
 def _build_agenda() -> None:
     if AGENDA:
         return
@@ -152,7 +162,7 @@ def list_customers(score: Optional[int] = None) -> list[dict[str, Any]]:
 
 @mcp.tool()
 def next_meeting(customer_name: str) -> dict[str, Any]:
-    """Get next planned meeting details for a customer, including previous notes and customer profile."""
+    """Get next planned meeting details for one single customer, including notes and customer profile."""
     log(f"<next_meeting> customer_name={customer_name}")
     customer = _customer_from_name(customer_name)
     if not customer:
@@ -288,6 +298,56 @@ def check_customer_status(customer_name: str) -> dict[str, Any]:
             if upcoming
             else None
         ),
+    }
+
+
+@mcp.tool()
+def add_customer_in_free_slot(customer_name: str, meeting_goal: Optional[str] = None) -> dict[str, Any]:
+    """Schedule a customer in the earliest free agenda slot (Monday-Friday). Ask for end-user approval before to call this functions. Show the approval in a form format."""
+    log(f"<add_customer_in_free_slot> customer_name={customer_name}")
+    customer = _customer_from_name(customer_name)
+    if not customer:
+        raise ValueError(f"Unknown customer: {customer_name}")
+
+    slots = _free_slots()
+    if not slots:
+        return {
+            "status": "no_free_slot",
+            "message": "No free slot available in the current Monday-Friday agenda.",
+        }
+
+    slot = slots[0]
+    new_id = f"m{len(AGENDA) + 1}"
+    goal = meeting_goal or f"Follow-up on {customer['interest']} and define next sales action."
+    meeting_name = f"Customer follow-up with {customer['company']}"
+
+    AGENDA.append(
+        {
+            "id": new_id,
+            "day": slot["day"],
+            "time": slot["time"],
+            "meeting_name": meeting_name,
+            "meeting_goal": goal,
+            "customer_id": customer["id"],
+            "customer_name": customer["name"],
+            "company": customer["company"],
+            "status": "planned",
+            "previous_notes": "No previous meeting recorded yet.",
+            "recorded_details": None,
+        }
+    )
+
+    return {
+        "status": "scheduled",
+        "meeting": {
+            "meeting_id": new_id,
+            "day": slot["day"],
+            "time": slot["time"],
+            "meeting_name": meeting_name,
+            "meeting_goal": goal,
+            "customer_name": customer["name"],
+            "company": customer["company"],
+        },
     }
 
 @mcp.tool()
