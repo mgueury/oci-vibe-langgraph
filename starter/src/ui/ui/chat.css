@@ -86,6 +86,7 @@ textarea {
     border-radius: 18px;
     border: 1px lightgray solid;
     outline: 0px #eee solid;
+    font-family: Arial, sans-serif;
 }
 
 button {
