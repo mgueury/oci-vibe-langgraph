@@ -146,39 +146,38 @@ def get_today_agenda() -> dict[str, Any]:
 
 
 @mcp.tool()
-def get_week_agenda() -> dict[str, Any]:
+def get_week_agenda() -> list[list[Any]]:
     """Return weekly agenda as a table: days (Mon-Fri) in columns and hours (09:00-17:00) in rows."""
     log("<get_week_agenda>")
     by_slot = {(m["day"], m["time"]): m for m in AGENDA}
-    table_rows: list[dict[str, Any]] = []
+    table: list[list[Any]] = []
+
+    # First row: column names
+    table.append(["hour", *WEEK_DAYS])
+
     for hour in HOURS_BY_DAY[WEEK_DAYS[0]]:
-        row: dict[str, Any] = {"hour": hour}
+        row: list[Any] = [hour]
         for day in WEEK_DAYS:
             m = by_slot.get((day, hour))
             if m:
-                row[day] = {
+                row.append({
                     "meeting_id": m["id"],
                     "meeting_name": m["meeting_name"],
                     "customer_name": m["customer_name"],
                     "company": m["company"],
                     "status": m["status"],
-                }
+                })
             else:
-                row[day] = {
+                row.append({
                     "meeting_id": None,
                     "meeting_name": None,
                     "customer_name": None,
                     "company": None,
                     "status": "free",
-                }
-        table_rows.append(row)
+                })
+        table.append(row)
 
-    return {
-        "currentDay": CURRENT_DAY,
-        "currentTime": CURRENT_TIME,
-        "columns": ["hour", *WEEK_DAYS],
-        "rows": table_rows,
-    }
+    return table
 
 
 @mcp.tool()

@@ -39,6 +39,11 @@ chatInput.addEventListener('keydown', (e) => {
         chatForm.requestSubmit();
     }
 });
+function autoGrowTextarea() {
+    if (!chatInput) return;
+    chatInput.style.height = 'auto';
+    chatInput.style.height = `${chatInput.scrollHeight-38}px`;
+}
 chatInput.addEventListener('input', autoGrowTextarea);
 
 
@@ -79,12 +84,6 @@ function hideSpinner() {
 function scrollToBottom() {
     // Scroll so the anchor div is visible
     document.getElementById('spinner-container').scrollIntoView({ behavior: "smooth" });
-}
-
-function autoGrowTextarea() {
-    if (!chatInput) return;
-    chatInput.style.height = 'auto';
-    chatInput.style.height = `${chatInput.scrollHeight-20}px`;
 }
 
 function renderJsTable(data) {
