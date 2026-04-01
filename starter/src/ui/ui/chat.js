@@ -70,7 +70,7 @@ function scrollToBottom() {
 function autoGrowTextarea() {
     if (!chatInput) return;
     chatInput.style.height = 'auto';
-    chatInput.style.height = `${chatInput.scrollHeight}px`;
+    chatInput.style.height = `${chatInput.scrollHeight-20}px`;
 }
 
 if (chatInput) {

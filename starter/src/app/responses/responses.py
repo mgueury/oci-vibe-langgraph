@@ -10,7 +10,7 @@ from fastapi.responses import StreamingResponse
 # Defaults can be overridden by AGENT_HUB_REGION.
 REGION = "us-chicago-1"
 # MODEL_ID = "openai.gpt-oss-120b"
-MODEL_ID = "xai.grok-4.20-0309-non-reasoning"
+MODEL_ID = "xai.grok-4-fast-non-reasoning"
 
 BASE_URL = f"https://inference.generativeai.{REGION}.oci.oraclecloud.com/20231130/openai/v1"
 PROJECT_OCID = os.environ.get("TF_VAR_project_ocid")
