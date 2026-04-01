@@ -75,7 +75,7 @@ function autoGrowTextarea() {
 
 if (chatInput) {
     chatInput.addEventListener('input', autoGrowTextarea);
-    autoGrowTextarea();
+    // autoGrowTextarea();
 }
 
 function renderJsTable(data) {
