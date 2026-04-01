@@ -11,6 +11,8 @@ def log( s ):
 
 
 WEEK_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+CURRENT_DAY = "Wednesday"
+CURRENT_TIME = "08:00"
 HOURS_BY_DAY: dict[str, list[str]] = {
     day: [f"{h:02d}:00" for h in range(9, 18)] for day in WEEK_DAYS
 }
@@ -119,39 +121,64 @@ def send_email(to: str, subject: str, body: str) -> dict[str, str]:
 
 
 @mcp.tool()
-def get_agenda() -> list[dict[str, Any]]:
-    """Return the weekly agenda (Monday-Friday), 6-8 customer meetings per day."""
-    log("<get_agenda>")
+def get_today_agenda() -> dict[str, Any]:
+    """Return today's planned agenda (demo current day is fixed to Wednesday)."""
+    log("<get_today_agenda>")
+    today_meetings = [
+        m for m in sorted(AGENDA, key=_meeting_sort_key)
+        if m["day"] == CURRENT_DAY and m["status"] == "planned"
+    ]
+    return {
+        "currentDay": CURRENT_DAY,
+        "currentTime": CURRENT_TIME,
+        "planned_meetings": [
+            {
+                "meeting_id": m["id"],
+                "time": m["time"],
+                "meeting_name": m["meeting_name"],
+                "customer_name": m["customer_name"],
+                "company": m["company"],
+                "status": m["status"],
+            }
+            for m in today_meetings
+        ],
+    }
+
+
+@mcp.tool()
+def get_week_agenda() -> dict[str, Any]:
+    """Return weekly agenda as a table: days (Mon-Fri) in columns and hours (09:00-17:00) in rows."""
+    log("<get_week_agenda>")
     by_slot = {(m["day"], m["time"]): m for m in AGENDA}
-    rows: list[dict[str, Any]] = []
-    for day in WEEK_DAYS:
-        for hour in HOURS_BY_DAY[day]:
+    table_rows: list[dict[str, Any]] = []
+    for hour in HOURS_BY_DAY[WEEK_DAYS[0]]:
+        row: dict[str, Any] = {"hour": hour}
+        for day in WEEK_DAYS:
             m = by_slot.get((day, hour))
             if m:
-                rows.append(
-                    {
-                        "day": day,
-                        "time": hour,
-                        "meeting_id": m["id"],
-                        "meeting_name": m["meeting_name"],
-                        "customer_name": m["customer_name"],
-                        "company": m["company"],
-                        "status": m["status"],
-                    }
-                )
+                row[day] = {
+                    "meeting_id": m["id"],
+                    "meeting_name": m["meeting_name"],
+                    "customer_name": m["customer_name"],
+                    "company": m["company"],
+                    "status": m["status"],
+                }
             else:
-                rows.append(
-                    {
-                        "day": day,
-                        "time": hour,
-                        "meeting_id": None,
-                        "meeting_name": None,
-                        "customer_name": None,
-                        "company": None,
-                        "status": "free",
-                    }
-                )
-    return rows
+                row[day] = {
+                    "meeting_id": None,
+                    "meeting_name": None,
+                    "customer_name": None,
+                    "company": None,
+                    "status": "free",
+                }
+        table_rows.append(row)
+
+    return {
+        "currentDay": CURRENT_DAY,
+        "currentTime": CURRENT_TIME,
+        "columns": ["hour", *WEEK_DAYS],
+        "rows": table_rows,
+    }
 
 
 @mcp.tool()
