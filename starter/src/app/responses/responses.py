@@ -16,7 +16,12 @@ BASE_URL = f"https://inference.generativeai.{REGION}.oci.oraclecloud.com/2023113
 PROJECT_OCID = os.environ.get("TF_VAR_project_ocid")
 GENAI_API_KEY = os.environ.get("TF_VAR_genai_api_key")
 MCP_SERVER_URL = os.environ.get("MCP_SERVER_URL")
-
+SYSTEM_PROMPT = """
+INSTRUCTIONS:
+- Assist ONLY with research-related tasks, DO NOT do any math.
+- To draw a diagram, use mermaid   
+- If not, use MarkDown to give a clear and short answer to the user.
+"""
 client = OpenAI(
     base_url=BASE_URL,
     api_key=GENAI_API_KEY,
@@ -90,7 +95,11 @@ def runs_stream(thread_id: str, payload: dict[str, Any], request: Request):
         "model": MODEL_ID,
         "temperature": 0.0,
         "tools": get_tools(),
-        "input": question,
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": question}
+        ],        
+        # "input": question,
         "stream": True,
         "conversation": thread_id
     }
