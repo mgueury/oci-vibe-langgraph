@@ -28,7 +28,21 @@ const micButton = document.getElementById('mic-button');
 // See https://docs.oracle.com/en-us/iaas/Content/APIGateway/Tasks/apigatewayusingjwttokens.htm#Using_JSON_Web_Tokens_JWTs_to_Add_Authentication_and_Authorization_to_API_Deployments__section_csrf_protection
 let csrfToken = "";
 
- // -- Code -----------------------------------------------------------------
+// -- Code -----------------------------------------------------------------
+
+
+// -- ChatInput ---
+// UX: Enter submits, Shift+Enter inserts newline.
+chatInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        chatForm.requestSubmit();
+    }
+});
+chatInput.addEventListener('input', autoGrowTextarea);
+
+
+// -- Rendering ---
 
 // Utility: safely parse JSON
 function safeParse(json) {
@@ -71,11 +85,6 @@ function autoGrowTextarea() {
     if (!chatInput) return;
     chatInput.style.height = 'auto';
     chatInput.style.height = `${chatInput.scrollHeight-20}px`;
-}
-
-if (chatInput) {
-    chatInput.addEventListener('input', autoGrowTextarea);
-    // autoGrowTextarea();
 }
 
 function renderJsTable(data) {
