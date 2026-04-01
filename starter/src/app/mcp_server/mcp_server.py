@@ -205,31 +205,39 @@ def list_customers(score: Optional[int] = None) -> list[dict[str, Any]]:
 
 
 @mcp.tool()
-def next_meeting(customer_name: str) -> dict[str, Any]:
-    """Get next planned meeting details for one single customer, including notes and customer profile."""
-    log(f"<next_meeting> customer_name={customer_name}")
-    customer = _customer_from_name(customer_name)
-    if not customer:
-        raise ValueError(f"Unknown customer: {customer_name}")
+def next_meeting() -> dict[str, Any]:
+    """Get the next planned meeting after demo currentDay/currentTime."""
+    log("<next_meeting>")
+    current_day_index = WEEK_DAYS.index(CURRENT_DAY)
 
-    meetings = [
-        m for m in sorted(AGENDA, key=_meeting_sort_key)
-        if m["customer_id"] == customer["id"] and m["status"] == "planned"
+    candidates = [
+        m
+        for m in AGENDA
+        if m["status"] == "planned"
+        and (
+            WEEK_DAYS.index(m["day"]) > current_day_index
+            or (
+                WEEK_DAYS.index(m["day"]) == current_day_index
+                and m["time"] >= CURRENT_TIME
+            )
+        )
     ]
-    if not meetings:
+
+    if not candidates:
         return {
-            "message": "No planned meeting for this customer.",
-            "customer": {
-                "name": customer["name"],
-                "company": customer["company"],
-                "location": customer["location"],
-                "interest": customer["interest"],
-                "score": customer["score"],
-            },
+            "currentDay": CURRENT_DAY,
+            "currentTime": CURRENT_TIME,
+            "message": "No upcoming planned meeting found.",
         }
 
-    m = meetings[0]
+    m = sorted(candidates, key=_meeting_sort_key)[0]
+    customer = next((c for c in CUSTOMERS if c["id"] == m["customer_id"]), None)
+    if not customer:
+        raise ValueError(f"Customer not found for meeting {m['id']}")
+
     return {
+        "currentDay": CURRENT_DAY,
+        "currentTime": CURRENT_TIME,
         "meeting": {
             "meeting_id": m["id"],
             "day": m["day"],
