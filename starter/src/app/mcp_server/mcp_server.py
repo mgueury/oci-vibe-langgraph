@@ -12,11 +12,7 @@ def log( s ):
 
 WEEK_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 HOURS_BY_DAY: dict[str, list[str]] = {
-    "Monday": ["09:00", "10:00", "11:00", "13:00", "14:00", "15:00"],
-    "Tuesday": ["09:00", "10:00", "11:00", "12:00", "14:00", "15:00", "16:00"],
-    "Wednesday": ["09:00", "10:00", "11:00", "13:00", "14:00", "15:00"],
-    "Thursday": ["09:00", "10:00", "11:00", "12:00", "14:00", "15:00", "16:00", "17:00"],
-    "Friday": ["09:00", "10:00", "11:00", "13:00", "14:00", "15:00"],
+    day: [f"{h:02d}:00" for h in range(9, 18)] for day in WEEK_DAYS
 }
 
 # Sales context: companies buying IT computer products/services.
@@ -83,6 +79,10 @@ def _build_agenda() -> None:
     meeting_cursor = 0
     for day in WEEK_DAYS:
         for hour in HOURS_BY_DAY[day]:
+            # Keep 6-8 meetings per day; leave remaining slots free.
+            hour_num = int(hour[:2])
+            if hour_num in {12, 17}:
+                continue
             customer = CUSTOMERS[customer_cursor % len(CUSTOMERS)]
             topic = MEETING_TOPICS[meeting_cursor % len(MEETING_TOPICS)]
             AGENDA.append(
@@ -122,18 +122,36 @@ def send_email(to: str, subject: str, body: str) -> dict[str, str]:
 def get_agenda() -> list[dict[str, Any]]:
     """Return the weekly agenda (Monday-Friday), 6-8 customer meetings per day."""
     log("<get_agenda>")
-    return [
-        {
-            "day": m["day"],
-            "time": m["time"],
-            "meeting_id": m["id"],
-            "meeting_name": m["meeting_name"],
-            "customer_name": m["customer_name"],
-            "company": m["company"],
-            "status": m["status"],
-        }
-        for m in sorted(AGENDA, key=_meeting_sort_key)
-    ]
+    by_slot = {(m["day"], m["time"]): m for m in AGENDA}
+    rows: list[dict[str, Any]] = []
+    for day in WEEK_DAYS:
+        for hour in HOURS_BY_DAY[day]:
+            m = by_slot.get((day, hour))
+            if m:
+                rows.append(
+                    {
+                        "day": day,
+                        "time": hour,
+                        "meeting_id": m["id"],
+                        "meeting_name": m["meeting_name"],
+                        "customer_name": m["customer_name"],
+                        "company": m["company"],
+                        "status": m["status"],
+                    }
+                )
+            else:
+                rows.append(
+                    {
+                        "day": day,
+                        "time": hour,
+                        "meeting_id": None,
+                        "meeting_name": None,
+                        "customer_name": None,
+                        "company": None,
+                        "status": "free",
+                    }
+                )
+    return rows
 
 
 @mcp.tool()

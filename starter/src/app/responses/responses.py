@@ -9,7 +9,8 @@ from fastapi.responses import StreamingResponse
 
 # Defaults can be overridden by AGENT_HUB_REGION.
 REGION = "us-chicago-1"
-MODEL_ID = "openai.gpt-oss-120b"
+# MODEL_ID = "openai.gpt-oss-120b"
+MODEL_ID = "xai.grok-4.20-0309-non-reasoning"
 
 BASE_URL = f"https://inference.generativeai.{REGION}.oci.oraclecloud.com/20231130/openai/v1"
 PROJECT_OCID = os.environ.get("TF_VAR_project_ocid")
@@ -58,7 +59,8 @@ def chat(q: str):
 @app.post("/threads")
 @app.post("/app/threads")
 def create_thread() -> dict[str, str]:
-    thread_id = str(uuid.uuid4())
+    conversation = client.conversations.create()
+    thread_id = conversation.id
     THREADS[thread_id] = {"next_message_id": 1}
     return {"thread_id": thread_id}
 
@@ -90,6 +92,7 @@ def runs_stream(thread_id: str, payload: dict[str, Any], request: Request):
         "tools": get_tools(),
         "input": question,
         "stream": True,
+        "conversation": thread_id
     }
     if authorization and authorization.lower().startswith("bearer "):
         response_kwargs["extra_headers"] = {"Authorization": authorization}
