@@ -95,11 +95,11 @@ def runs_stream(thread_id: str, payload: dict[str, Any], request: Request):
         "model": MODEL_ID,
         "temperature": 0.0,
         "tools": get_tools(),
-        "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": question}
-        ],        
-        # "input": question,
+        # "messages": [
+        #     {"role": "system", "content": SYSTEM_PROMPT},
+        #     {"role": "user", "content": question}
+        # ],        
+        "input": question,
         "stream": True,
         "conversation": thread_id
     }
