@@ -364,22 +364,40 @@ def check_customer_status(customer_name: str) -> dict[str, Any]:
 
 
 @mcp.tool()
-def add_customer_in_free_slot(customer_name: str, meeting_goal: Optional[str] = None) -> dict[str, Any]:
-    """Schedule a customer in the earliest free agenda slot (Monday-Friday). Ask for end-user approval before to call this functions. Show the approval in a form format."""
-    log(f"<add_customer_in_free_slot> customer_name={customer_name}")
+def add_customer_in_free_slot(
+    customer_name: str, 
+    day: Optional[str] = None, 
+    time: Optional[str] = None,
+    meeting_goal: Optional[str] = None
+) -> dict[str, Any]:
+    """Schedule a customer in a free agenda slot. 
+    If day and time are not provided, uses the earliest free slot.
+    Ask for end-user approval before calling this function. Show the approval in a form format."""
+    log(f"<add_customer_in_free_slot> customer_name={customer_name}, day={day}, time={time}")
+    
     customer = _customer_from_name(customer_name)
     if not customer:
         raise ValueError(f"Unknown customer: {customer_name}")
 
-    # Allocate earliest available free slot in the week.
-    slots = _free_slots()
-    if not slots:
-        return {
-            "status": "no_free_slot",
-            "message": "No free slot available in the current Monday-Friday agenda.",
-        }
+    # Allocate earliest available free slot in the week if not specified
+    if day is None or time is None:
+        slots = _free_slots()
+        if not slots:
+            return {
+                "status": "no_free_slot",
+                "message": "No free slot available in the current Monday-Friday agenda.",
+            }
+        slot = slots[0]
+    else:
+        # Validate the requested slot is free
+        used = {(m["day"], m["time"]) for m in AGENDA}
+        if (day, time) in used:
+            return {
+                "status": "slot_taken",
+                "message": f"Slot {day} at {time} is already taken.",
+            }
+        slot = {"day": day, "time": time}
 
-    slot = slots[0]
     new_id = f"m{len(AGENDA) + 1}"
     goal = meeting_goal or f"Follow-up on {customer['interest']} and define next sales action."
     meeting_name = f"Customer follow-up with {customer['company']}"
