@@ -371,7 +371,6 @@ def add_customer_in_free_slot(
     meeting_goal: Optional[str] = None
 ) -> dict[str, Any]:
     """Schedule a customer in a free agenda slot. 
-    If day and time are not provided, uses the earliest free slot.
     Ask for end-user approval before calling this function. Show the approval in a form format."""
     log(f"<add_customer_in_free_slot> customer_name={customer_name}, day={day}, time={time}")
     
