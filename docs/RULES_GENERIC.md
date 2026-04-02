@@ -1,38 +1,54 @@
-# Generic Implementation Rules (Syntax & Conventions)
+# RULES_GENERIC.md
 
-These rules describe implementation conventions inferred from the current `src/` codebase, without hard-coding business logic.
+## Code Style and Architecture Guidelines
 
-## Shell scripting conventions
+### General Principles
+- **Follow existing patterns** in the codebase for consistency
+- **Use async/await** for all I/O operations (FastAPI, database, network)
+- **Keep functions small** and single-responsibility
+- **Add clear docstrings** for all public functions and classes
+- **Use type hints** where possible for better maintainability
 
-- Use Bash for automation (`#!/usr/bin/env bash` or `#!/bin/bash`).
-- Resolve script location with `BASH_SOURCE[0]` and `cd` to script directory before relative operations.
-- Source environment bridges (`env.sh`, `compute/tf_env.sh`) before running dependent commands.
-- Keep scripts rerunnable and explicit (`install.sh`, `start.sh`, `build_*.sh`, `db_init.sh`).
+### Python Code Style
+- Follow **PEP 8** with **Black** formatting
+- Use **double quotes** for strings
+- **f-strings** for string formatting when possible
+- **4 spaces** indentation
+- **Snake_case** for variables and functions, **PascalCase** for classes
+- Import order: standard library → third-party → local
 
-## Python service conventions
+### FastMCP / LangGraph Patterns
+- Use `@mcp.tool()` decorator for MCP tools
+- Inject user context using `context.user_id` or similar
+- Return structured data with `artifact` for UI rendering
+- Use `langchain_mcp_adapters` for LangGraph ↔ MCP integration
 
-- Python components are dependency-driven by local `requirements.txt` files.
-- LangGraph agent code lives under `src/app/src_langgraph/agent/`.
-- MCP tools live in `src/app/src_mcp_server/mcp_server.py` and are registered with `@mcp.tool()`.
-- Configuration is read from environment variables (for example `MCP_SERVER_URL`, DB credentials, OCI settings).
+### Error Handling
+- Use specific exceptions instead of generic ones
+- Log errors with appropriate levels
+- Return user-friendly error messages
 
-## UI conventions
+### Security
+- Never hardcode credentials
+- Use environment variables for configuration
+- Validate all inputs
+- Follow least privilege principle for tools
 
-- UI is static web content in `src/ui/ui/` (HTML/CSS/JS + assets).
-- Front-end JavaScript uses `fetch` and relative URLs for backend integration.
-- Keep chat behavior in `chat.js` and markup in `chat.html`.
+### Documentation
+- Keep comments up-to-date
+- Document complex business logic
+- Include usage examples for tools
 
-## Container/Kubernetes conventions
+### UI / Frontend
+- Use semantic HTML
+- Keep JavaScript modular
+- Use modern ES6+ features
+- Ensure accessibility (ARIA labels, keyboard support)
 
-- Dockerfiles are separated by component (`Dockerfile_langgraph`, `Dockerfile_mcp_server`, UI `Dockerfile`).
-- Kubernetes manifests are split by service (`k8s_langgraph.yaml`, `k8s_mcp_server.yaml`, `ui.yaml`).
+### Terraform / Infrastructure
+- Use consistent naming convention (`${var.prefix}-*`)
+- Group related resources
+- Use data sources when possible
+- Tag all resources with `freeform_tags`
 
-## Reverse proxy conventions
-
-- NGINX path routing for compute deployment is defined in `src/compute/nginx_app.locations`.
-- Keep path contracts stable (for example `/langgraph/server/` forwarding to local service port).
-
-## Terraform conventions
-
-- Terraform files are modularized by concern (`provider.tf`, `network.tf`, `compute.tf`, `atp.tf`, `output.tf`, etc.).
-- Use Terraform outputs/environment export flow to feed runtime shell and app setup.
+Last updated: 2026-02-04

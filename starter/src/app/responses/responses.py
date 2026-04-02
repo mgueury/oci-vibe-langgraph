@@ -91,18 +91,25 @@ def runs_stream(thread_id: str, payload: dict[str, Any], request: Request):
     log("<runs_stream> question=", question)
 
     authorization = request.headers.get("authorization")
+    
+    message_id = int(THREADS[thread_id].get("next_message_id", 1))
+    if message_id == 1:
+        input_payload = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": question},
+        ]
+    else:
+        input_payload = question  # just the user message  if message_id=1:
+
     response_kwargs: dict[str, Any] = {
         "model": MODEL_ID,
         "temperature": 0.0,
-        "tools": get_tools(),
-        # "messages": [
-        #     {"role": "system", "content": SYSTEM_PROMPT},
-        #     {"role": "user", "content": question}
-        # ],        
-        "input": question,
+        "tools": get_tools(),     
+        "input": input_payload,
         "stream": True,
         "conversation": thread_id
     }
+
     if authorization and authorization.lower().startswith("bearer "):
         response_kwargs["extra_headers"] = {"Authorization": authorization}
         log("<runs_stream> forwarding bearer authorization header")

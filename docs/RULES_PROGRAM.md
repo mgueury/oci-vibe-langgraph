@@ -1,37 +1,84 @@
-# Program-Specific Rules (OCI Vibe + LangGraph + MCP)
+# RULES_PROGRAM.md
 
-These rules define behavior specific to this repository implementation under `starter/src`.
+## Program-Specific Rules for OCI Vibe LangGraph Demo
 
-## Database rules
+### Business Domain
+This project demonstrates **"Vibe Coding"** using OCI AI Agent API keys with:
+- Sales agenda management
+- Customer relationship tracking
+- Oracle Database integration (DEPT/EMP tables)
+- Voice input capabilities
+- Multi-agent backend (LangGraph + Responses API)
 
-- Oracle schema initialization is defined in `src/db/oracle.sql` and executed by `src/db/db_init.sh`.
-- `oracle.sql` currently defines and seeds:
-  - `DEPT(DEPTNO, DNAME, LOC)`
-  - `EMP(EMPNO, ENAME, JOB, DEPTNO)` with FK to `DEPT`.
-- Any change to table structure or seed data must be made in `oracle.sql` to remain deployable.
+### Database Schema
+**Tables**:
+- `DEPT` (DEPTNO, DNAME, LOC)
+- `EMP` (EMPNO, ENAME, JOB, MGR, DEPTNO)
 
-## MCP server rules
+**Sample Data**:
+- Departments: ACCOUNTING (10), RESEARCH (20), SALES (30), OPERATIONS (40)
+- Classic Scott/Tiger EMP hierarchy
 
-- MCP server entrypoint is `src/app/src_mcp_server/mcp_server.py`.
-- Server transport is HTTP on port `2025`.
-- MCP tools are Python functions decorated with `@mcp.tool()`.
-- The server includes a department data tool `get_dept_data` that reads from Oracle `DEPT` using `DB_USER`, `DB_PASSWORD`, and `DB_URL`.
+### MCP Tools (mcp_server.py)
+**Sales Tools**:
+- `get_agenda(user_id)`: Get user's meeting schedule
+- `get_customers()`: List all customers
+- `add_meeting(customer, topic, date, user_id)`: Schedule a meeting
+- `record_outcome(meeting_id, outcome, user_id)`: Record meeting results
 
-## LangGraph agent rules
+**Database Tools**:
+- `get_dept()`: Return all departments
+- `get_emp()`: Return all employees with department join
+- `get_emp_by_dept(deptno)`: Filter employees by department
 
-- Agent runtime is in `src/app/src_langgraph/agent/agent.py`.
-- It connects to the MCP server via `MCP_SERVER_URL` using `MultiServerMCPClient`.
-- Tool calls are mediated by interceptor `inject_user_context` to pass authorization context.
-- Model provider uses OCI Generative AI configuration via environment variables.
+**Tool Implementation Rules**:
+- All tools must accept `context` parameter for user context injection
+- Return data in `{"response": "...", "result": [...]}` format for UI rendering
+- Use `oracledb` async connection from environment variables
+- Log all operations for debugging
 
-## UI/chat rules
+### LangGraph Agent (agent.py)
+- Uses `openai.gpt-oss-120b` model via `ChatOCIGenAI`
+- Connects to MCP server via `MultiServerMCPClient`
+- Uses `langgraph-cli` with `langgraph.json` configuration
+- Authentication via `auth.py` (OAuth caching with `aiocache`)
 
-- Chat UI entry files are `src/ui/ui/chat.html` and `src/ui/ui/chat.js`.
-- The frontend sends streaming run requests to `/langgraph/server/threads/{thread_id}/runs/stream`.
-- On OpenID paths, user info and CSRF token are obtained from `/openid/userinfo`.
+### Responses API (responses.py)
+- Alternative backend using OCI's Responses API
+- Same MCP tools available
+- Different endpoint (`/responses`)
 
-## Routing and deployment rules
+### UI Behavior (chat.js)
+- Supports multiple backends: LangGraph, Responses, OpenID variants
+- Voice input using Web Speech API
+- Markdown + Mermaid diagram rendering
+- Table rendering for structured tool results
+- User context switching (employee/customer)
+- CSRF protection for OpenID mode
 
-- Compute NGINX routing is declared in `src/compute/nginx_app.locations`.
-- `/app/` is proxied to local port `8080`.
-- Kubernetes manifests are maintained per service in `src/app/k8s_langgraph.yaml`, `src/app/k8s_mcp_server.yaml`, and `src/ui/ui.yaml`.
+### Configuration
+**Required terraform.tfvars**:
+- `prefix`, `db_password`, `license_model`
+- `compartment_ocid`
+- `project_ocid`, `genai_api_key` (for Responses API)
+
+**Environment Variables**:
+- Database connection details passed via `tf_env.sh`
+- OCI GenAI credentials
+- MCP server port: 2025 (default)
+
+### Demo Flow
+1. User speaks or types request
+2. Agent decides which MCP tool to call
+3. Tool executes (DB query or business logic)
+4. Results rendered in chat with tables/diagrams
+5. Voice input → transcription → agent processing
+
+### Extensibility Rules
+- Add new tools to `mcp_server.py` using `@mcp.tool()`
+- Update `langgraph.json` if changing agent graph
+- Keep UI rendering logic generic in `renderMessage()`
+- Update `helper/demo.txt` when adding new demo features
+
+**Last updated**: 2026-02-04
+**Version**: 1.0 (Vibe Coding Demo)
