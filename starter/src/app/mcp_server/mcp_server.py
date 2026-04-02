@@ -378,7 +378,6 @@ def add_customer_in_free_slot(
     if not customer:
         raise ValueError(f"Unknown customer: {customer_name}")
 
-    # Allocate earliest available free slot in the week if not specified
     if day is None or time is None:
         slots = _free_slots()
         if not slots:

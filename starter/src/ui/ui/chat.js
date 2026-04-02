@@ -42,7 +42,7 @@ chatInput.addEventListener('keydown', (e) => {
 function autoGrowTextarea() {
     if (!chatInput) return;
     chatInput.style.height = 'auto';
-    chatInput.style.height = `${chatInput.scrollHeight-37}px`;
+    chatInput.style.height = `${chatInput.scrollHeight-36}px`;
 }
 chatInput.addEventListener('input', autoGrowTextarea);
 
