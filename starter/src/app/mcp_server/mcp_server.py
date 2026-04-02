@@ -10,6 +10,7 @@ def log( s ):
     print( s, flush=True )
 
 
+# Demo time context used by agenda tools.
 WEEK_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 CURRENT_DAY = "Monday"
 CURRENT_TIME = "15:00"
@@ -40,11 +41,13 @@ MEETING_TOPICS = [
     "Contract negotiation",
 ]
 
+# In-memory data store for meetings and tracking state.
 AGENDA: list[dict[str, Any]] = []
 LAST_RECORDED_MEETING_BY_CUSTOMER: dict[str, str] = {}
 
 
 def _customer_index(customer_id: str) -> Optional[int]:
+    """Return customer index in CUSTOMERS by id."""
     for idx, c in enumerate(CUSTOMERS):
         if c["id"] == customer_id:
             return idx
@@ -52,6 +55,7 @@ def _customer_index(customer_id: str) -> Optional[int]:
 
 
 def _customer_from_name(customer_name: str) -> Optional[dict[str, Any]]:
+    """Find a customer by full name (case-insensitive)."""
     needle = customer_name.strip().lower()
     for c in CUSTOMERS:
         if c["name"].lower() == needle:
@@ -60,10 +64,12 @@ def _customer_from_name(customer_name: str) -> Optional[dict[str, Any]]:
 
 
 def _meeting_sort_key(m: dict[str, Any]) -> tuple[int, str]:
+    """Sort meetings by weekday order then by time."""
     return (WEEK_DAYS.index(m["day"]), m["time"])
 
 
 def _free_slots() -> list[dict[str, str]]:
+    """Return all currently empty slots across the week."""
     used = {(m["day"], m["time"]) for m in AGENDA}
     slots: list[dict[str, str]] = []
     for day in WEEK_DAYS:
@@ -74,6 +80,7 @@ def _free_slots() -> list[dict[str, str]]:
 
 
 def _build_agenda() -> None:
+    """Seed demo agenda with planned meetings and intentional free slots."""
     if AGENDA:
         return
 
@@ -124,6 +131,7 @@ def send_email(to: str, subject: str, body: str) -> dict[str, str]:
 def get_today_agenda() -> dict[str, Any]:
     """Return today's planned agenda (demo current day is fixed to Wednesday)."""
     log("<get_today_agenda>")
+    # Use demo CURRENT_DAY / CURRENT_TIME, not real system date/time.
     today_meetings = [
         m for m in sorted(AGENDA, key=_meeting_sort_key)
         if m["day"] == CURRENT_DAY and m["status"] == "planned"
@@ -149,6 +157,7 @@ def get_today_agenda() -> dict[str, Any]:
 def get_week_agenda() -> list[list[Any]]:
     """Return weekly agenda as a table: days (Mon-Fri) in columns and hours (09:00-17:00) in rows."""
     log("<get_week_agenda>")
+    # Build a matrix representation with headers in first row.
     by_slot = {(m["day"], m["time"]): m for m in AGENDA}
     table: list[list[Any]] = []
 
@@ -210,6 +219,7 @@ def next_meeting() -> dict[str, Any]:
     log("<next_meeting>")
     current_day_index = WEEK_DAYS.index(CURRENT_DAY)
 
+    # Find the first planned meeting at/after the demo current day/time.
     candidates = [
         m
         for m in AGENDA
@@ -285,7 +295,7 @@ def record_meeting(customer_name: str, meeting_details: str, result: str) -> dic
             CUSTOMERS[idx]["score"] = min(10, CUSTOMERS[idx]["score"] + 2)
             customer = CUSTOMERS[idx]
 
-    # carry notes to next meeting (if any)
+    # Carry notes forward to the next planned meeting for continuity.
     upcoming = [
         m for m in sorted(AGENDA, key=_meeting_sort_key)
         if m["customer_id"] == customer["id"] and m["status"] == "planned"
@@ -361,6 +371,7 @@ def add_customer_in_free_slot(customer_name: str, meeting_goal: Optional[str] = 
     if not customer:
         raise ValueError(f"Unknown customer: {customer_name}")
 
+    # Allocate earliest available free slot in the week.
     slots = _free_slots()
     if not slots:
         return {
