@@ -269,7 +269,7 @@ def next_meeting() -> dict[str, Any]:
 
 @mcp.tool()
 def record_meeting(customer_name: str, meeting_details: str, result: str) -> dict[str, Any]:
-    """Record details for the customer's next planned meeting; increase score by +2 when result is good."""
+    """Record details for the customer's next planned meeting; increase score by +1 when result is good."""
     log(f"<record_meeting> customer_name={customer_name}, result={result}")
     customer = _customer_from_name(customer_name)
     if not customer:
@@ -292,7 +292,7 @@ def record_meeting(customer_name: str, meeting_details: str, result: str) -> dic
     if result.strip().lower() in {"good", "won", "positive", "success", "successful"}:
         idx = _customer_index(customer["id"])
         if idx is not None:
-            CUSTOMERS[idx]["score"] = min(10, CUSTOMERS[idx]["score"] + 2)
+            CUSTOMERS[idx]["score"] = min(10, CUSTOMERS[idx]["score"] + 1)
             customer = CUSTOMERS[idx]
 
     # Carry notes forward to the next planned meeting for continuity.
