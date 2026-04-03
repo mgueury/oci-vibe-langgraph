@@ -108,7 +108,7 @@ INSTRUCTIONS:
 - When using a MCP tool, take care not to  pass empty parameters name like "", or {"":{}}
 - To draw a diagram, use mermaid   
 - If not, use MarkDown to give a clear and short answer to the user.
-- When showing the agenda, use colored icons to indicate importance
+- When showing an agenda, use colored icons to indicate importance
 """
 
 agent = asyncio.run(init("agent", prompt, None))
