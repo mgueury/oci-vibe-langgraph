@@ -13,7 +13,7 @@ def log( s ):
 # Demo time context used by agenda tools.
 WEEK_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 CURRENT_DAY = "Monday"
-CURRENT_TIME = "15:00"
+CURRENT_TIME = "14:45"
 HOURS_BY_DAY: dict[str, list[str]] = {
     day: [f"{h:02d}:00" for h in range(9, 18)] for day in WEEK_DAYS
 }
