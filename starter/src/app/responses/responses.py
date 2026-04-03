@@ -99,6 +99,7 @@ def runs_stream(thread_id: str, payload: dict[str, Any], request: Request):
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": question},
         ]
+        log("<runs_stream> SYSTEM_PROMPT")
     else:
         input_payload = question  # just the user message  if message_id=1:
 
