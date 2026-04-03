@@ -117,18 +117,19 @@ async function renderMessage(msgObj) {
     // Human message
     if (msgObj.type === 'human') {
         innerHTML = `<div class="bubble"><div class="meta">You</div>${renderMarkdown(msgObj.content)}</div>`;
-    } else if (msgObj.type === 'ai') {
-        if (msgObj.content) {
-            innerHTML = `<div class="bubble"><div class="meta">AI</div>${await renderContent(msgObj.content)}</div>`;
-        } else if (msgObj.tool_calls && msgObj.tool_calls.length > 0) {
-            let bubble = `<div class="bubble"><div class="meta">Tool Calls</div>`;
-            let tools = msgObj.tool_calls.map(t =>
-                `<tr><td>${t.name}</td><td>${JSON.stringify(t.args)}</td></tr>`
-            ).join('');
-            bubble += `<table class='tools-table'><thead><tr><th>Name</th><th>Arguments</th><tr></thead><tbody>${tools}</tbody></table>`;
-            innerHTML = bubble;
-        }
-    } else if (msgObj.type === 'tool') {
+        } else if (msgObj.type === 'ai') {
+            if (msgObj.content) {
+                innerHTML = `<div class="bubble"><div class="meta">AI</div>${await renderContent(msgObj.content)}</div>`;
+            } else if (msgObj.tool_calls && msgObj.tool_calls.length > 0) {
+                const toolNames = msgObj.tool_calls.map(t => t.name).join(' - ');
+                let bubble = `<div class="bubble"><div class="meta">Tool Calls - ${toolNames}</div>`;
+                let tools = msgObj.tool_calls.map(t =>
+                    `<tr><td>${t.name}</td><td>${JSON.stringify(t.args)}</td></tr>`
+                ).join('');
+                bubble += `<table class='tools-table'><thead><tr><th>Name</th><th>Arguments</th></tr></thead><tbody>${tools}</tbody></table>`;
+                innerHTML = bubble;
+            }
+        } else if (msgObj.type === 'tool') {
         let data = msgObj.artifact?.structured_content ?? {};
         let bubble = "<div class='bubble'><div class='meta'>Tool - " + msgObj.name + "</div>";
         if (data?.response) {
