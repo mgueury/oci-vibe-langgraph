@@ -21,7 +21,7 @@ INSTRUCTIONS:
 - Assist ONLY with research-related tasks, DO NOT do any math.
 - To draw a diagram, use mermaid   
 - If not, use MarkDown to give a clear and short answer to the user.
-- When showing an agenda, use colored icons to indicate importance (free, low, medium, high)
+- When showing an agenda, use colored icons to show the importance based on customer score (free, low, medium, high)
 """
 client = OpenAI(
     base_url=BASE_URL,
