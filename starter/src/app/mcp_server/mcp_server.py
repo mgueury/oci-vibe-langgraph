@@ -104,6 +104,7 @@ def _build_agenda() -> None:
                     "customer_id": customer["id"],
                     "customer_name": customer["name"],
                     "company": customer["company"],
+                    "score": customer["score"],
                     "status": "planned",
                     "previous_notes": "No previous meeting recorded yet.",
                     "recorded_details": None,
